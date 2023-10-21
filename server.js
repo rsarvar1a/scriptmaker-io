@@ -41,4 +41,6 @@ app.get('*', (req, res) =>
 
 // Start server
 
-httpserver.listen(3000);
+httpserver.listen(3000, () => {
+    console.log("Ready and listening on port 3000.");
+});

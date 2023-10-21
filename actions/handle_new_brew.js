@@ -36,7 +36,7 @@ const handle_new_brew = async (req, res, next) =>
     const nightorder = source.nightorder;
     const script = source.script;
     const simple = source.simple;
-    const script_content = {};
+    var script_content = {};
 
     const make_script = source.make.includes('script');
     const make_almanac = source.make.includes('almanac');
@@ -60,10 +60,11 @@ const handle_new_brew = async (req, res, next) =>
         try
         {
             const resp = await fetch(url);
-            script_content = await resp.json();
+            script_content = JSON.parse(await resp.text());
         }
         catch (err)
         {
+            console.log(err);
             res.status(400).send('could not find script at url');
             return;
         }
@@ -80,7 +81,7 @@ const handle_new_brew = async (req, res, next) =>
     
     // Determine a script name to steal as a filename, if possible.
 
-    const script_name = "homebrew";
+    var script_name = "homebrew";
 
     for (const entry of script_content)
     {
@@ -97,8 +98,8 @@ const handle_new_brew = async (req, res, next) =>
     const script_path = `${script_name}.script`;
     const source_path = "homebrew.source";
 
-    const working_dir = "";
-    const script_id = "";
+    var working_dir = "";
+    var script_id = "";
 
     const available_pdfs = [];
     
@@ -114,65 +115,67 @@ const handle_new_brew = async (req, res, next) =>
 
     try
     {
-        fs.mkdtemp(path.join(__dirname, "../homebrews/", `brew-${edition}-`), (err, directory) =>
+        const directory = fs.mkdtempSync(path.join(__dirname, "../homebrews/", `brew-${edition}-`));
+
+        working_dir = directory;
+        script_id = path.basename(directory);
+
+        const source_json = 
+        {
+            "edition": edition,
+            "url": script_path,
+            "naming_prefix": script_name,
+            "available": available_pdfs
+        };
+
+        fs.writeFile(path.join(working_dir, source_path), JSON.stringify(source_json), (err) =>
         {
             if (err)
             {
-                res.status(500).send('internal error: failed to make brew directory');
+                fs.rmSync(directory, { recursive: true });
                 throw err;
-            }
-
-            working_dir = directory;
-            script_id = path.basename(directory);
-
-            const source_json = 
-            {
-                "edition": edition,
-                "url": script_path,
-                "naming_prefix": script_name,
-                "available": available_pdfs
-            };
-
-            fs.writeFile(path.join(working_dir, source_path), JSON.stringify(source_json), (err) =>
-            {
-                res.status(500).send('internal error: failed to save source');
-                fs.rmdirSync(directory, { recursive: true });
-                throw err;
-            });
-
-            fs.writeFile(path.join(working_dir, script_path), JSON.stringify(script_content), (err) =>
-            {
-                res.status(500).send('internal error: failed to save script');
-                fs.rmdirSync(directory, { recursive: true });
-                throw err;
-            });
-
-            if (nightorder)
-            {
-                fs.writeFile(path.join(working_dir, nightorder_path), JSON.stringify(nightorder), (err) =>
-                {
-                    res.status(500).send('internal error: failed to save nightorder');
-                    fs.rmdirSync(directory, { recursive: true });
-                    throw err;
-                })
             }
         });
+
+        fs.writeFile(path.join(working_dir, script_path), JSON.stringify(script_content), (err) =>
+        {
+            if (err)
+            {
+                fs.rmSync(directory, { recursive: true });
+                throw err;
+            }
+        });
+
+        if (nightorder)
+        {
+            fs.writeFile(path.join(working_dir, nightorder_path), JSON.stringify(nightorder), (err) =>
+            {
+                if (err)
+                {
+                    fs.rmSync(directory, { recursive: true });
+                    throw err;
+                }
+            })
+        }
     }
     catch (err)
     {
+        res.status(500).send(`internal error: ${err}`);
         return;
     }
+
+    console.log(`created ${working_dir}`);
 
     // Extract / scrape / parse homebrew with scriptmaker
 
     const scriptmaker_pwd = path.join(__dirname, "../scriptmaker");
 
-    const resp_homebrew = spawnSync("bin/homebrew", [working_dir], { cwd: scriptmaker_pwd });
+    const resp_homebrew = spawnSync("bin/homebrew", [working_dir], { cwd: scriptmaker_pwd, shell: true });
 
     if (resp_homebrew.error)
     {
-        res.status(400).send(`failed to homebrew: ${resp_homebrew.stderr.toString()}`);
-        fs.rmdirSync(working_dir, { recursive: true });
+        res.status(400).send(`failed to homebrew: ${resp_homebrew.error.message}`);
+        fs.rmSync(working_dir, { recursive: true });
         return;
     }
 
@@ -191,11 +194,11 @@ const handle_new_brew = async (req, res, next) =>
 
     if (make_script)
     {
-        const resp_makepdf = spawnSync("bin/make-pdf", make_pdf_args, { cwd: scriptmaker_pwd });
+        const resp_makepdf = spawnSync("bin/make-pdf", make_pdf_args, { cwd: scriptmaker_pwd, shell: true });
 
         if (resp_makepdf.error)
         {
-            res.status(400).send(`failed to make pdfs: ${resp_makepdf.stderr.toString()}`);
+            res.status(400).send(`failed to make pdfs: ${resp_makepdf.error.message}`);
             fs.rmdirSync(working_dir, { recursive: true });
             return;
         }
@@ -203,11 +206,11 @@ const handle_new_brew = async (req, res, next) =>
 
     if (make_almanac)
     {
-        const resp_almanac = spawnSync("bin/almanac", [working_dir], { cwd: scriptmaker_pwd });
+        const resp_almanac = spawnSync("bin/almanac", [working_dir], { cwd: scriptmaker_pwd, shell: true });
 
         if (resp_almanac.error)
         {
-            res.status(400).send(`failed to make almanac: ${resp_almanac.stderr.toString()}`);
+            res.status(400).send(`failed to make almanac: ${resp_almanac.error.message}`);
             fs.rmdirSync(working_dir, { recursive: true });
             return;
         }
