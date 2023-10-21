@@ -29,7 +29,14 @@ const handle_send_pdf = async (req, res, next) =>
             fs.readFile(target, (err, data) =>
             {
                 if (err) throw err;
-                res.status(200).sendFile(attachment_name, { root: working_dir }, (err) => {});
+                res.status(200).sendFile(attachment_name, { root: working_dir }, (err) => 
+                {
+                    if (err)
+                    {
+                        res.status(500).send(`internal error: ${err}`);
+                        throw err;
+                    }
+                });
             });
         });
     }
