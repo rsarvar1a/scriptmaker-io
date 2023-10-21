@@ -196,6 +196,13 @@ const handle_new_brew = async (req, res, next) =>
         }
     }
 
+    const filepaths = fs.readdirSync(working_dir);
+    for (const filepath of filepaths)
+    {
+        const filename = path.join(working_dir, filepath);
+        spawnSync("bin/compress", [filename], { cwd: scriptmaker_pwd, shell: true });
+    }
+
     // Send the rendering ID and PDF links to the client
 
     res.status(200).json({ 
