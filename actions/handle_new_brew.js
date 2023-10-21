@@ -87,7 +87,7 @@ const handle_new_brew = async (req, res, next) =>
     {
         if (entry.id == "_meta" && "name" in entry)
         {
-            script_name = entry.name.replace(" ", "_");
+            script_name = entry.name.replaceAll(" ", "_");
             break;
         }
     }
