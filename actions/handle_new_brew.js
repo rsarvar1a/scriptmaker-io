@@ -85,9 +85,9 @@ const handle_new_brew = async (req, res, next) =>
 
     for (const entry of script_content)
     {
-        if ("_meta" in entry && "name" in entry._meta)
+        if (entry.id == "_meta" && "name" in entry)
         {
-            script_name = entry._meta.name;
+            script_name = entry.name.replace(" ", "_");
             break;
         }
     }
@@ -123,39 +123,16 @@ const handle_new_brew = async (req, res, next) =>
         const source_json = 
         {
             "edition": edition,
-            "url": script_path,
+            "url": path.join(working_dir, script_path),
             "naming_prefix": script_name,
             "available": available_pdfs
         };
 
-        fs.writeFile(path.join(working_dir, source_path), JSON.stringify(source_json), (err) =>
-        {
-            if (err)
-            {
-                fs.rmSync(directory, { recursive: true });
-                throw err;
-            }
-        });
-
-        fs.writeFile(path.join(working_dir, script_path), JSON.stringify(script_content), (err) =>
-        {
-            if (err)
-            {
-                fs.rmSync(directory, { recursive: true });
-                throw err;
-            }
-        });
-
+        fs.writeFileSync(path.join(working_dir, source_path), JSON.stringify(source_json));
+        fs.writeFileSync(path.join(working_dir, script_path), JSON.stringify(script_content));
         if (nightorder)
         {
-            fs.writeFile(path.join(working_dir, nightorder_path), JSON.stringify(nightorder), (err) =>
-            {
-                if (err)
-                {
-                    fs.rmSync(directory, { recursive: true });
-                    throw err;
-                }
-            })
+            fs.writeFileSync(path.join(working_dir, nightorder_path), JSON.stringify(nightorder));
         }
     }
     catch (err)
@@ -170,6 +147,7 @@ const handle_new_brew = async (req, res, next) =>
 
     const scriptmaker_pwd = path.join(__dirname, "../scriptmaker");
 
+    console.log(`bin/homebrew ${working_dir}`);
     const resp_homebrew = spawnSync("bin/homebrew", [working_dir], { cwd: scriptmaker_pwd, shell: true });
 
     if (resp_homebrew.error)
@@ -181,11 +159,11 @@ const handle_new_brew = async (req, res, next) =>
 
     // Make PDFs with scriptmaker, honouring options
 
-    const make_pdf_args = [script_path, "--homebrew_directory", working_dir];
+    const make_pdf_args = [path.join(working_dir, script_path)];
     
     if (nightorder)
     {
-        make_pdf_args.push("--nightorder", nightorder_path);
+        make_pdf_args.push("--nightorder", path.join(working_dir, nightorder_path));
     }
     if (simple)
     {
@@ -194,6 +172,7 @@ const handle_new_brew = async (req, res, next) =>
 
     if (make_script)
     {
+        console.log(`bin/make-pdf ${make_pdf_args}`);
         const resp_makepdf = spawnSync("bin/make-pdf", make_pdf_args, { cwd: scriptmaker_pwd, shell: true });
 
         if (resp_makepdf.error)
@@ -206,6 +185,7 @@ const handle_new_brew = async (req, res, next) =>
 
     if (make_almanac)
     {
+        console.log(`bin/almanac ${working_dir}`);
         const resp_almanac = spawnSync("bin/almanac", [working_dir], { cwd: scriptmaker_pwd, shell: true });
 
         if (resp_almanac.error)
