@@ -137,5 +137,8 @@
 # generated
 **/public
 
+# scriptmaker is cloned instead
+**/scriptmaker
+
 # fly config
 fly.toml

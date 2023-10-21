@@ -4,8 +4,6 @@ FROM node:latest
 
 WORKDIR /app
 COPY . ./
-RUN mkdir -p homebrews
-RUN mkdir -p public
 
 # Install deps
 

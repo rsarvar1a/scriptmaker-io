@@ -135,3 +135,6 @@ homebrews/
 
 # generated
 public/
+
+# scriptmaker is cloned instead
+**/scriptmaker
