@@ -9,6 +9,12 @@ const handle_send_pdf = async (req, res, next) =>
 
     const working_dir = path.join(__dirname, '../homebrews', scriptid);
 
+    if (! ['almanac', 'nightorder', 'script'].includes(pdftype))
+    {
+        res.status(404).send(`invalid resource ${pdftype}`);
+        return;
+    }
+
     try
     {
         fs.readFile(path.join(working_dir, "homebrew.source"), (err, data) =>
@@ -23,11 +29,7 @@ const handle_send_pdf = async (req, res, next) =>
             fs.readFile(target, (err, data) =>
             {
                 if (err) throw err;
-
-                res.status(200).sendFile(attachment_name, { root: working_dir }, (err) => 
-                {
-                    if (err) next(err);
-                });
+                res.status(200).sendFile(attachment_name, { root: working_dir }, (err) => {});
             });
         });
     }

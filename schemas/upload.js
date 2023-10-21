@@ -20,6 +20,15 @@ const upload_schema =
                     "type": "string",
                     "required": true
                 },
+                "make":
+                {
+                    "type": "array",
+                    "required": true,
+                    "items":
+                    {
+                        "type": "string"
+                    }
+                },
                 "simple": 
                 {
                     "type": "boolean", 

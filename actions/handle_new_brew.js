@@ -1,5 +1,6 @@
 const fetch = require('node-fetch');
 const fs = require('fs');
+const moment = require('moment');
 const path = require("path");
 const { spawnSync } = require("child_process");
 
@@ -36,6 +37,9 @@ const handle_new_brew = async (req, res, next) =>
     const script = source.script;
     const simple = source.simple;
     const script_content = {};
+
+    const make_script = source.make.includes('script');
+    const make_almanac = source.make.includes('almanac');
 
     if (script)
     {
@@ -96,6 +100,18 @@ const handle_new_brew = async (req, res, next) =>
     const working_dir = "";
     const script_id = "";
 
+    const available_pdfs = [];
+    
+    if (make_script)
+    {
+        available_pdfs.push('script', 'nightorder');
+    }
+
+    if (make_almanac)
+    {
+        available_pdfs.push('almanac');
+    }
+
     try
     {
         fs.mkdtemp(path.join(__dirname, "../homebrews/", `brew-${edition}-`), (err, directory) =>
@@ -113,7 +129,8 @@ const handle_new_brew = async (req, res, next) =>
             {
                 "edition": edition,
                 "url": script_path,
-                "naming_prefix": script_name
+                "naming_prefix": script_name,
+                "available": available_pdfs
             };
 
             fs.writeFile(path.join(working_dir, source_path), JSON.stringify(source_json), (err) =>
@@ -154,12 +171,10 @@ const handle_new_brew = async (req, res, next) =>
 
     if (resp_homebrew.error)
     {
-        res.status(400).send(`failed to homebrew: ${resp_homebrew.stderr}`);
+        res.status(400).send(`failed to homebrew: ${resp_homebrew.stderr.toString()}`);
         fs.rmdirSync(working_dir, { recursive: true });
         return;
     }
-
-    const available_pdfs = [];
 
     // Make PDFs with scriptmaker, honouring options
 
@@ -180,12 +195,10 @@ const handle_new_brew = async (req, res, next) =>
 
         if (resp_makepdf.error)
         {
-            res.status(400).send(`failed to make pdfs: ${resp_makepdf.stderr}`);
+            res.status(400).send(`failed to make pdfs: ${resp_makepdf.stderr.toString()}`);
             fs.rmdirSync(working_dir, { recursive: true });
             return;
         }
-
-        available_pdfs.push('script', 'nightorder');
     }
 
     if (make_almanac)
@@ -194,12 +207,10 @@ const handle_new_brew = async (req, res, next) =>
 
         if (resp_almanac.error)
         {
-            res.status(400).send(`failed to make almanac: ${resp_almanac.stderr}`);
+            res.status(400).send(`failed to make almanac: ${resp_almanac.stderr.toString()}`);
             fs.rmdirSync(working_dir, { recursive: true });
             return;
         }
-
-        available_pdfs.push('almanac');
     }
 
     // Send the rendering ID and PDF links to the client

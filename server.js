@@ -5,6 +5,7 @@ const { Server } = require('http');
 
 // Handlers
 
+const handle_available = require('./actions/handle_available');
 const handle_new_brew = require('./actions/handle_new_brew');
 const handle_send_pdf = require('./actions/handle_send_pdf');
 
@@ -27,7 +28,12 @@ app.use(express.json());
 // App routes
 
 app.post('/api/brew', handle_new_brew);
+
+app.get('/api/:scriptid/available', handle_available);
 app.get('/api/:scriptid/download/:pdftype', handle_send_pdf);
+
+// Kick rest up to frontend
+
 app.get('*', (req, res) => 
 {
     res.render('app');

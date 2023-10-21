@@ -1,19 +1,21 @@
-FROM node:alpine
+FROM node:latest
 
-# Copy over
+# Copy resources and make directories
 
 WORKDIR /app
 COPY . ./
+RUN mkdir -p homebrews
+RUN mkdir -p public
 
-# Install git and clone scriptmaker
+# Install deps
 
-RUN apk add --update git curl python3 py3-pip
-RUN git clone https://github.com/rsarvar1a/scriptmaker
+RUN apt-get update && apt-get install -y git curl python-is-python3 python3-pip python3-poetry
 
 # Prep scriptmaker 
 
+RUN git clone https://github.com/rsarvar1a/scriptmaker
 WORKDIR /app/scriptmaker
-RUN bin/install
+RUN poetry install
 RUN bin/update
 
 # Start the server
@@ -21,5 +23,4 @@ RUN bin/update
 WORKDIR /app
 RUN npm install
 RUN npm run build
-
 CMD ["npm", "run", "start"]
