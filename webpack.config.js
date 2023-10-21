@@ -1,77 +1,47 @@
+const webpack = require('webpack');
 const path = require('path');
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const devMode = process.env.NODE_ENV !== 'production';
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-module.exports = {
+const config = {
     entry: './src/index.js',
     output: {
-        filename: 'bundle.js',
-        path: path.resolve(__dirname, 'public')
+        path: path.resolve(__dirname, 'public'),
+        filename: 'bundle.js'
     },
     module: {
         rules: [
             {
-                test: /\.s?[ac]ss$/,
-                use: [
-                    MiniCssExtractPlugin.loader,
-                    {
-                        loader: 'css-loader',
-                        options: {
-                            sourceMap: true
-                        }
-                    },
-                    {
-                        loader: 'sass-loader',
-                        options: {
-                            sourceMap: true
-                        }
-                    },
-                ],
+                test: /\.(js|jsx)$/,
+                use: 'babel-loader',
+                exclude: /node_modules/
             },
             {
-                test: /\.js$/,
-                exclude: /node_modules/,
-                use: "babel-loader"
+                test: /\.css$/,
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader'
+                ]
             },
             {
                 test: /\.png$/,
-                loader: 'file-loader',
-                options: {
-                    name: 'img/[name].[ext]',
-                    context: ''
-                }
-            }
-            , {
-                test: /\.woff(\?v=\d+\.\d+\.\d+)?$/,
-                loader: "url-loader?limit=10000&mimetype=application/font-woff&name=fonts/[name].[ext]"
-            }, {
-                test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/,
-                loader: "url-loader?limit=10000&mimetype=application/font-woff&name=fonts/[name].[ext]"
-            }, {
-                test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-                loader: "url-loader?limit=10000&mimetype=application/octet-stream&name=fonts/[name].[ext]"
-            }, {
-                test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-                loader: "file-loader",
-                options: {
-                    name: 'fonts/[name].[ext]',
-                    context: ''
-                }
-            }, {
-                test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-                loader: "url-loader?limit=10000&mimetype=image/svg+xml&name=fonts/[name].[ext]"
+                use: [
+                    {
+                        loader: 'url-loader',
+                        options: {
+                            mimetype: 'image/png'
+                        }
+                    }
+                ]
+            },
+            {
+                test: /\.svg$/,
+                use: 'file-loader'
             }
         ]
     },
-    devtool: 'source-map',
     plugins: [
-        new MiniCssExtractPlugin({
-            filename: "style.css"
-        }),
-    ],
-    mode: devMode ? 'development' : 'production',
-    watch: devMode,
-    performance: {
-        hints: process.env.NODE_ENV === 'production' ? "warning" : false
-    },
+        new MiniCssExtractPlugin()
+    ]
 };
+
+module.exports = config;
