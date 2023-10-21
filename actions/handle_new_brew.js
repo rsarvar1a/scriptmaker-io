@@ -199,6 +199,8 @@ const handle_new_brew = async (req, res, next) =>
     const filepaths = fs.readdirSync(working_dir);
     for (const filepath of filepaths)
     {
+        if (! filepath.match("*.pdf")) continue;
+
         const filename = path.join(working_dir, filepath);
         spawnSync("bin/compress", [filename], { cwd: scriptmaker_pwd, shell: true });
     }
