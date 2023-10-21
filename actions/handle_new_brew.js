@@ -196,13 +196,13 @@ const handle_new_brew = async (req, res, next) =>
         }
     }
 
-    const filepaths = fs.readdirSync(working_dir);
-    for (const filepath of filepaths)
-    {
-        if (! filepath.match("*.pdf")) continue;
+    const resp_compress = spawnSync("bin/compress", [working_dir], { cwd: scriptmaker_pwd, shell: true });
 
-        const filename = path.join(working_dir, filepath);
-        spawnSync("bin/compress", [filename], { cwd: scriptmaker_pwd, shell: true });
+    if (resp_compress.error)
+    {
+        res.status(500).send(`failed to compress: ${resp_compress.error.message}`);
+        fs.rmdirSync(working_dir, { recursive: true });
+        return;
     }
 
     // Send the rendering ID and PDF links to the client
