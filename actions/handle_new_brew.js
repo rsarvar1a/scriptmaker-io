@@ -94,9 +94,9 @@ const handle_new_brew = async (req, res, next) =>
 
     // Create a working directory and save the script, the source, and the nightorder if applicable    
 
-    const nightorder_path = "homebrew.nightorder";
-    const script_path = `${script_name}.script`;
-    const source_path = "homebrew.source";
+    const nightorder_path = "nightorder.json";
+    const script_path = `${script_name}.json`;
+    const source_path = "homebrew-source.json";
 
     var working_dir = "";
     var script_id = "";

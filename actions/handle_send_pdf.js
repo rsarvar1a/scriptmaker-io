@@ -17,7 +17,7 @@ const handle_send_pdf = async (req, res, next) =>
 
     try
     {
-        fs.readFile(path.join(working_dir, "homebrew.source"), (err, data) =>
+        fs.readFile(path.join(working_dir, "homebrew-source.json"), (err, data) =>
         {
             if (err) throw err;
 

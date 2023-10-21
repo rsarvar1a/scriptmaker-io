@@ -5,7 +5,7 @@ const handle_available = async (req, res, next) =>
 {
     try 
     {
-        fs.readFile(path.join(__dirname, "../homebrews", "homebrew.source"), (err, data) =>
+        fs.readFile(path.join(__dirname, "../homebrews", "homebrew-source.json"), (err, data) =>
         {
             if (err) throw err;
 
