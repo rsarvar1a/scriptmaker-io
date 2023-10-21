@@ -3,11 +3,15 @@ FROM node:alpine
 # Copy over
 
 WORKDIR /app
-COPY * ./
+COPY * .
 
-# Include scriptmaker util in server root, and prep it
+# Install git and clone scriptmaker
 
+RUN apk add --update git curl python3 py3-pip
 RUN git clone https://github.com/rsarvar1a/scriptmaker
+
+# Prep scriptmaker 
+
 WORKDIR /app/scriptmaker
 RUN bin/install
 RUN bin/update

@@ -18,6 +18,7 @@
     "http": "^0.0.1-security",
     "jsonschema": "^1.4.1",
     "node-fetch": "^2.7.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "webpack": "^5.89.0"
   }
 }
