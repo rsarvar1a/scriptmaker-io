@@ -3,7 +3,7 @@ FROM node:alpine
 # Copy over
 
 WORKDIR /app
-COPY * .
+COPY . ./
 
 # Install git and clone scriptmaker
 
