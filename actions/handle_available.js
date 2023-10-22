@@ -1,28 +1,22 @@
-const fs = require('fs');
-const path = require('path');
+const PGClient = require("../clients/db");
 
 const handle_available = async (req, res, next) =>
 {
+    const script_id = req.params.scriptid;
+
     try 
     {
-        const script_id = req.params.scriptid;
+        const pg = new PGClient();
+        const available = await pg.getAvailableDownloads(script_id);
 
-        fs.readFile(path.join(__dirname, "../homebrews", script_id, "homebrew-source.json"), (err, data) =>
-        {
-            if (err) throw err;
-
-            const source_json = JSON.parse(data);
-            const available = source_json.available;
-
-            res.status(200).json({
-                id: script_id,
-                available: available
-            });
+        req.status(200).json({ 
+            id: script_id,
+            available: available
         });
     }
     catch (err)
     {
-        res.status(404).send("no such script");
+        res.status(404).send(`failed to retrieve available download types: ${err}`);
     }
 };
 

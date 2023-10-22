@@ -2,106 +2,29 @@
 
 A front-end for my [scriptmaker](https://github.com/rsarvar1a/scriptmaker) utility.
 
+## current stack
 
 - frontend
     - `scriptmaker.fly.dev/`
-        - React, `ejs`
+        - React, ejs
 - backend
     - `scriptmaker.fly.dev/api`
-        - Node.js, `express`, `webpack`
+        - Node.js, express.js, webpack, Postgres, Amazon S3
     - `scriptmaker`
-        - Python, `poetry`, `jinja2`, `weasyprint`, `ghostscript`
+        - Python, poetry, jinja2, weasyprint, ghostscript
 - deployment
-    - Docker, [fly.io](https://fly.io)
+    - Docker, fly.io
 
-# Planned improvements
+## planned improvements
 
 - frontend
     - actually have a frontend
-- backend
-    - host files via Amazon S3
-    - manage brews with Postgres
 
 # API
 
 ## Example
 
-Here's an example of a script that creates a brew and downloads some requested PDFs.
-
-```python
-import argparse
-import os
-import requests
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--url', required=True)
-parser.add_argument('--edition', required=True)
-args = parser.parse_args()
-
-# If you could use domain_dev, you could just use scriptmaker directly instead...
-domain_dev = "http://localhost:3000" 
-domain_prd = "https://scriptmaker.fly.dev"
-domain = domain_prd
-
-#
-# Upload a brew
-#
-
-response = requests.post(f"{domain}/api/brew", json = {
-    "source": {
-        "url": args.url,
-        "edition": args.edition,
-        "make": ['script']
-    }
-})
-
-if not response.ok:
-    # Might be a good time to open a GitHub issue
-    print(response.status_code, response.content.decode())
-    exit(1)
-
-script_id = response.json()['id']
-available = response.json()['available']
-num_pages = response.json()['pages']
-
-if not os.path.exists("output"):
-    os.mkdir("output")
-
-#
-# Save all available PDFs
-#
-
-save_dir = f"output/{script_id}"
-if not os.path.exists(save_dir):
-    os.mkdir(save_dir)
-
-for pdf_type in available:
-    response_pdf = requests.get(f"{domain}/api/{script_id}/download/{pdf_type}")
-    if response_pdf.ok:
-        with open(f"{save_dir}/{pdf_type}.pdf", "wb") as file:
-            file.write(response_pdf.content)
-    else:
-        # Significantly likely to be a good time to open a GitHub issue
-        print(response_pdf.status_code, response_pdf.content.decode())
-
-#
-# Save all available PNGs
-#
-
-save_dir = f"output/{script_id}/pages"
-if not os.path.exists(save_dir):
-    os.mkdir(save_dir)
-
-for page_num in range(1, num_pages + 1):
-    response_png = requests.get(f"{domain}/api/{script_id}/pages/{page_num}")
-    if response_png.ok:
-        with open(f"{save_dir}/{page_num}.png", "wb") as file:
-            file.write(response_png.content)
-    else:
-        # Another great time to open a GitHub issue
-        print(response_png.status_code, response_png.content.decode())
-```
+Coming soon...
 
 ## API reference
 
@@ -186,7 +109,23 @@ Returns the script id and a list of available `pdftype`s:
 ```json
 {
     "id": "brew-your-edition-name-abc123",
+    "name": "My Amazing Homebrew Script",
     "available": ["script", "nightorder", "almanac"],
+    "pages": 4
+}
+```
+
+***
+
+```http
+GET /api/:script_id
+```
+
+If `script_id` is a valid script id, returns the script id, name, and page count:
+```json
+{
+    "id": "brew-your-edition-name-abc123",
+    "name": "My Amazing Homebrew Script",
     "pages": 4
 }
 ```
@@ -213,7 +152,7 @@ GET /api/:script_id/download/:pdftype
 
 `pdftype` should be one of `script`, `nightorder`, or `almanac`.
 
-If `script_id` is a valid script id, and `pdftype` is available, returns the requested PDF file in the request content.
+If `script_id` is a valid script id, and `pdftype` is available, redirects to the file on S3.
 
 ***
 
@@ -235,4 +174,4 @@ If `script_id` is a valid script id, returns the script id and the number of ava
 GET /api/:script_id/pages/:page_number
 ```
 
-If `script_id` is a valid script id, and `page_number` is in range, returns the corresponding PNG page in the requets content.
+If `script_id` is a valid script id, and `page_number` is in range, redirects to the file on S3.

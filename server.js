@@ -8,6 +8,7 @@ const { Server } = require('http');
 const handle_available = require('./actions/handle_available');
 const handle_new_brew = require('./actions/handle_new_brew');
 const handle_num_pages = require('./actions/handle_num_pages');
+const handle_script_info = require('./actions/handle_script_info');
 const handle_send_page = require('./actions/handle_send_page');
 const handle_send_pdf = require('./actions/handle_send_pdf');
 
@@ -33,10 +34,10 @@ app.post('/api/brew', handle_new_brew);
 
 // PDF routes
 
+app.get('/api/:scriptid', handle_script_info);
+
 app.get('/api/:scriptid/download', handle_available);
 app.get('/api/:scriptid/download/:pdftype', handle_send_pdf);
-
-// PNG routes
 
 app.get('/api/:scriptid/pages', handle_num_pages);
 app.get('/api/:scriptid/pages/:pagenum', handle_send_page);

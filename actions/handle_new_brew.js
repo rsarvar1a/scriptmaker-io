@@ -4,6 +4,11 @@ const moment = require('moment');
 const path = require("path");
 const { spawnSync } = require("child_process");
 
+// Clients
+
+const AWSClient = require("../clients/aws");
+const PGClient = require("../clients/db");
+
 // Request validation
 
 const { Validator } = require('jsonschema');
@@ -13,108 +18,101 @@ const upload_schema = require('../schemas/upload')
 
 const handle_new_brew = async (req, res, next) => 
 {
-    // Ensure the request body is a well-formed homebrew
-
-    const homebrew = req.body;
-
-    const validator = new Validator();
-    validator.addSchema(script_schema, script_schema['id']);
-    validator.addSchema(nightorder_schema, nightorder_schema['id']);
-
-    if (! homebrew || ! validator.validate(homebrew, upload_schema))
-    {
-        res.status(400).send('bad request body');
-        return;
-    }
-
-    // Figure out where we're getting our script from, and validate everything
-
-    const source = homebrew.source;
-    const edition = source.edition;
-    const url = source.url;
-
-    const nightorder = source.nightorder;
-    const script = source.script;
-    const simple = source.simple;
-    var script_content = {};
-
-    const make_script = source.make.includes('script');
-    const make_almanac = source.make.includes('almanac');
-
-    if (script)
-    {
-        // Validate the script we found in the body
-
-        if (! validator.validate(script, script_schema))
-        {
-            res.status(400).send('provided script has invalid structure');
-            return;
-        }
-
-        script_content = script;
-    }
-    else
-    {
-        // Get the script from bloodstar (or wherever, really)
-
-        try
-        {
-            const resp = await fetch(url);
-            script_content = JSON.parse(await resp.text());
-        }
-        catch (err)
-        {
-            console.log(err);
-            res.status(400).send(`internal error: ${err}`);
-            return;
-        }
-    }
-
-    if (nightorder)
-    {
-        if (! validator.validate(nightorder, nightorder_schema))
-        {
-            res.status(400).send('provided nightorder has invalid structure');
-            return;
-        }
-    }
-    
-    // Determine a script name to steal as a filename, if possible.
-
-    var script_name = "homebrew";
-
-    for (const entry of script_content)
-    {
-        if (entry.id == "_meta" && "name" in entry)
-        {
-            script_name = entry.name.replaceAll(" ", "_");
-            break;
-        }
-    }
-
-    // Create a working directory and save the script, the source, and the nightorder if applicable    
-
-    const nightorder_path = "nightorder.json";
-    const script_path = `${script_name}.json`;
-    const source_path = "homebrew-source.json";
-
     var working_dir = "";
     var script_id = "";
+    var script_name = "homebrew";
+    var available_pdfs = [];
 
-    const available_pdfs = [];
-    
-    if (make_script)
+    try 
     {
-        available_pdfs.push('script', 'nightorder');
-    }
+        // Ensure the request body is a well-formed homebrew
 
-    if (make_almanac)
-    {
-        available_pdfs.push('almanac');
-    }
+        const homebrew = req.body;
 
-    try
-    {
+        const validator = new Validator();
+        validator.addSchema(script_schema, script_schema['id']);
+        validator.addSchema(nightorder_schema, nightorder_schema['id']);
+
+        if (! homebrew || ! validator.validate(homebrew, upload_schema))
+        {
+            throw Error(`invalid request body`);
+        }
+
+        // Figure out where we're getting our script from, and validate everything
+
+        const source = homebrew.source;
+        const edition = source.edition;
+        const url = source.url;
+
+        const nightorder = source.nightorder;
+        const script = source.script;
+        const simple = source.simple;
+        var script_content = {};
+
+        const make_script = source.make.includes('script');
+        const make_almanac = source.make.includes('almanac');
+
+        if (script)
+        {
+            // Validate the script we found in the body
+
+            if (! validator.validate(script, script_schema))
+            {
+                throw Error(`provided script has invalid structure`);
+            }
+
+            script_content = script;
+        }
+        else
+        {
+            // Get the script from bloodstar (or wherever, really)
+
+            try
+            {
+                const resp = await fetch(url);
+                script_content = JSON.parse(await resp.text());
+            }
+            catch (err)
+            {
+                throw Error(`could not retrieve script from URL: ${err}`);
+            }
+        }
+
+        if (nightorder)
+        {
+            if (! validator.validate(nightorder, nightorder_schema))
+            {
+                throw Error(`provided nightorder has invalid structure`);
+            }
+        }
+        
+        // Determine a script name to steal as a filename, if possible.
+
+        for (const entry of script_content)
+        {
+            if (entry.id == "_meta" && "name" in entry)
+            {
+                script_name = entry.name.replaceAll(" ", "_");
+                break;
+            }
+        }
+
+        const nightorder_path = "nightorder.json";
+        const script_path = `${script_name}.json`;
+        const source_path = "homebrew-source.json";
+        
+        if (make_script)
+        {
+            available_pdfs.push('script', 'nightorder');
+        }
+
+        if (make_almanac)
+        {
+            available_pdfs.push('almanac');
+        }
+
+        // Create a working directory and save the script, the source, and the nightorder if applicable  
+
         const directory = fs.mkdtempSync(path.join(__dirname, "../homebrews/", `brew-${edition}-`));
 
         working_dir = directory;
@@ -134,104 +132,148 @@ const handle_new_brew = async (req, res, next) =>
         {
             fs.writeFileSync(path.join(working_dir, nightorder_path), JSON.stringify(nightorder));
         }
+
+        console.log(`created ${working_dir}`);
+
+        // Extract / scrape / parse homebrew with scriptmaker
+
+        const scriptmaker_pwd = path.join(__dirname, "../scriptmaker");
+
+        console.log(`bin/homebrew ${working_dir}`);
+        const resp_homebrew = spawnSync("bin/homebrew", [working_dir], { cwd: scriptmaker_pwd, shell: true });
+
+        if (resp_homebrew.error)
+        {
+            throw resp_homebrew.error;
+        }
+
+        // Make PDFs with scriptmaker, honouring options
+
+        const make_pdf_args = [path.join(working_dir, script_path)];
+        
+        if (nightorder)
+        {
+            make_pdf_args.push("--nightorder", path.join(working_dir, nightorder_path));
+        }
+        if (simple)
+        {
+            make_pdf_args.push("--simple");
+        }
+
+        if (make_script)
+        {
+            console.log(`bin/make-pdf ${make_pdf_args}`);
+            const resp_makepdf = spawnSync("bin/make-pdf", make_pdf_args, { cwd: scriptmaker_pwd, shell: true });
+
+            if (resp_makepdf.error)
+            {  
+                throw resp_makepdf.error;
+            }
+        }
+
+        if (make_almanac)
+        {
+            const almanac_basename = path.join(working_dir, `${script_name}-almanac.pdf`);
+            console.log(`bin/almanac ${working_dir} --output ${almanac_basename}`);
+            const resp_almanac = spawnSync("bin/almanac", [working_dir, "--output", almanac_basename], { cwd: scriptmaker_pwd, shell: true });
+
+            if (resp_almanac.error)
+            {
+                throw resp_almanac.error;
+            }
+        }
+
+        // Compress PDFs to save space (necessary until I migrate to S3) (and after that too, honestly)
+
+        console.log(`bin/compress ${working_dir}`);
+        const resp_compress = spawnSync("bin/compress", [working_dir], { cwd: scriptmaker_pwd, shell: true });
+
+        if (resp_compress.error)
+        {
+            throw resp_compress.error;
+        }
+
+        // PNGify scripts so the frontend can fetch and display it
+
+        console.log(`bin/pngify ${path.join(working_dir, script_path)}`);
+        const resp_pngify = spawnSync("bin/pngify", [path.join(working_dir, script_path)], { cwd: scriptmaker_pwd, shell: true });
+
+        if (resp_pngify.error)
+        {
+            throw resp_pngify.error;
+        }
+
+        const pages_path = path.join(working_dir, "pages");
+        const num_pages = fs.readdirSync(pages_path).length;
+
+        // Create the brew.
+
+        const aws = new AWSClient();
+        const pg = new PGClient();
+
+        await aws.createBrew(script_id);
+        await pg.createBrew(script_id, script_name, num_pages);
+
+        // Upload the PDFs to S3 and save paths to the database
+
+        const pdf_basenames = {}
+        if (make_script)
+        {
+            pdf_basenames['script'] = `${script_name}-script.pdf`;
+            pdf_basenames['nightorder'] = `${script_name}-nightorder.pdf`;
+        }
+        if (make_almanac)
+        {
+            pdf_basenames['almanac'] = `${script_name}-almanac.pdf`;
+        }
+
+        for (const pdf_type in pdf_basenames)
+        {
+            const pdf_full_path = path.join(working_dir, pdf_basenames[pdf_type]);
+            const url = await aws.uploadDownloadable(script_id, pdf_full_path);
+            await pg.createDownload(script_id, pdf_type, url);
+        }
+
+        // Create the PNGs in S3 and save paths to the database
+
+        for (const i = 1; i <= num_pages; i++)
+        {
+            const png_basename = `${script_name}-${i}.png`;
+            const png_full_path = path.join(working_dir, "pages", png_basename);
+            const url = await aws.uploadPage(script_id, png_full_path);
+            await pg.createPage(script_id, i, url);
+        }
     }
     catch (err)
     {
-        res.status(500).send(`internal error: ${err}`);
+        const pg = new PGClient();
+        await pg.destroyBrew(script_id);
+
+        res.status(500).send(`failed to brew: ${err}`);
         return;
     }
-
-    console.log(`created ${working_dir}`);
-
-    // Extract / scrape / parse homebrew with scriptmaker
-
-    const scriptmaker_pwd = path.join(__dirname, "../scriptmaker");
-
-    console.log(`bin/homebrew ${working_dir}`);
-    const resp_homebrew = spawnSync("bin/homebrew", [working_dir], { cwd: scriptmaker_pwd, shell: true });
-
-    if (resp_homebrew.error)
+    finally
     {
-        res.status(400).send(`failed to homebrew: ${resp_homebrew.error.message}`);
-        fs.rmSync(working_dir, { recursive: true });
-        return;
-    }
-
-    // Make PDFs with scriptmaker, honouring options
-
-    const make_pdf_args = [path.join(working_dir, script_path)];
-    
-    if (nightorder)
-    {
-        make_pdf_args.push("--nightorder", path.join(working_dir, nightorder_path));
-    }
-    if (simple)
-    {
-        make_pdf_args.push("--simple");
-    }
-
-    if (make_script)
-    {
-        console.log(`bin/make-pdf ${make_pdf_args}`);
-        const resp_makepdf = spawnSync("bin/make-pdf", make_pdf_args, { cwd: scriptmaker_pwd, shell: true });
-
-        if (resp_makepdf.error)
+        try
         {
-            res.status(400).send(`failed to make pdfs: ${resp_makepdf.error.message}`);
             fs.rmSync(working_dir, { recursive: true });
-            return;
+        }
+        catch (err)
+        {
+            console.log(err);
         }
     }
 
-    if (make_almanac)
-    {
-        console.log(`bin/almanac ${working_dir}`);
-        const resp_almanac = spawnSync("bin/almanac", [working_dir], { cwd: scriptmaker_pwd, shell: true });
-
-        if (resp_almanac.error)
-        {
-            res.status(400).send(`failed to make almanac: ${resp_almanac.error.message}`);
-            fs.rmSync(working_dir, { recursive: true });
-            return;
-        }
-    }
-
-    // Compress PDFs to save space (necessary until I migrate to S3) (and after that too, honestly)
-
-    console.log(`bin/compress ${working_dir}`);
-    const resp_compress = spawnSync("bin/compress", [working_dir], { cwd: scriptmaker_pwd, shell: true });
-
-    if (resp_compress.error)
-    {
-        res.status(500).send(`failed to compress: ${resp_compress.error.message}`);
-        fs.rmSync(working_dir, { recursive: true });
-        return;
-    }
-
-    // PNGify scripts so the frontend can fetch and display it
-
-    console.log(`bin/pngify ${path.join(working_dir, script_path)}`);
-    const resp_pngify = spawnSync("bin/pngify", [path.join(working_dir, script_path)], { cwd: scriptmaker_pwd, shell: true });
-
-    if (resp_pngify.error)
-    {
-        res.status(500).send(`failed to produce images: ${resp_pngify.error.message}`);
-        fs.rmSync(working_dir, { recursive: true });
-        return;
-    }
-
-    const pages_path = path.join(working_dir, "pages");
-    const num_pages = fs.readdirSync(pages_path).length;
-
-    // Send the rendering ID and PDF links to the client
+    // Send the script id and info to the client
 
     console.log(`processed ${script_id}`);
     
     res.status(200).json({ 
         id: script_id,
+        name: script_name,
         available: available_pdfs,
         pages: num_pages
-     });
+    });
 };
 
 module.exports = handle_new_brew;

@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.433.0",
+    "aws-sdk": "^2.1478.0",
     "child_process": "^1.0.2",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
@@ -22,6 +24,8 @@
     "node-fetch": "^2.7.0",
     "nodemon": "^3.0.1",
     "path": "^0.12.7",
+    "pg": "^8.11.3",
+    "postgres": "^3.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

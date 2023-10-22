@@ -1,28 +1,22 @@
-const fs = require('fs');
-const path = require('path');
+const PGClient = require("../clients/db");
 
 const handle_num_pages = async (req, res, next) =>
 {
+    const script_id = req.params.scriptid;
+
     try 
     {
-        const script_id = req.params.scriptid;
-
-        fs.readFile(path.join(__dirname, "../homebrews", script_id, "homebrew-source.json"), (err, data) =>
-        {
-            if (err) throw err;
-
-            const source_json = JSON.parse(data);
-            const num_pages = source_json.pages;
-
-            res.status(200).json({
-                id: script_id,
-                pages: num_pages
-            });
+        const pg = new PGClient();
+        const num_pages = await pg.getNumberOfPages(script_id);
+        
+        res.status(200).json({
+            id: script_id,
+            pages: num_pages
         });
     }
     catch (err)
     {
-        res.status(404).send("no such script");
+        res.status(400).send(`failed to retrieve number of pages: ${err}`);
     }
 };
 
