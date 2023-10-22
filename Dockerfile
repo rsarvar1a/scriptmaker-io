@@ -7,7 +7,7 @@ COPY . ./
 
 # Install deps
 
-RUN apt-get update && apt-get install -y git curl python-is-python3 python3-pip python3-poetry jq ghostscript
+RUN apt-get update && apt-get install -y git curl python-is-python3 python3-pip python3-poetry jq ghostscript poppler-utils
 
 # Prep scriptmaker 
 
