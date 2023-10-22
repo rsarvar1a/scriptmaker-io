@@ -16,7 +16,68 @@ A front-end for my [scriptmaker](https://github.com/rsarvar1a/scriptmaker) utili
 
 # API
 
-If you'd just like to use the server for your own needs, here you go.
+## Example
+
+Here's an example of a script that creates a brew and downloads some requested PDFs.
+
+```python
+import argparse
+import os
+import requests
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--url', required=True)
+parser.add_argument('--edition', required=True)
+args = parser.parse_args()
+
+# If you could use domain_dev, you could just use scriptmaker directly instead...
+domain_dev = "http://localhost:3000" 
+domain_prd = "https://scriptmaker.fly.dev"
+domain = domain_prd
+
+#
+# Upload a brew
+#
+
+response = requests.post(f"{domain}/api/brew", json = {
+    "source": {
+        "url": args.url,
+        "edition": args.edition,
+        "make": ['script']
+    }
+})
+
+if not response.ok:
+    # Might be a good time to open a GitHub issue
+    print(response.status_code, response.content.decode())
+    exit(1)
+
+script_id = response.json()['id']
+available = response.json()['available']
+
+#
+# Save all available PDFs
+#
+
+if not os.path.exists("output"):
+    os.mkdir("output")
+
+save_dir = f"output/{script_id}"
+if not os.path.exists(save_dir):
+    os.mkdir(save_dir)
+
+for pdf_type in available:
+    response_pdf = requests.get(f"{domain}/api/{script_id}/download/{pdf_type}")
+    if response_pdf.ok:
+        with open(f"{save_dir}/{pdf_type}.pdf", "wb") as file:
+            file.write(response_pdf.content)
+    else:
+        # Significantly likely to be a good time to open a GitHub issue
+        print(response_pdf.status_code, response_pdf.content.decode())
+```
+
+## API reference
 
 ***
 
