@@ -196,8 +196,9 @@ const handle_new_brew = async (req, res, next) =>
         }
     }
 
-    // Compress PDFs to save space (necessary until I migrate to S3)
+    // Compress PDFs to save space (necessary until I migrate to S3) (and after that too, honestly)
 
+    console.log(`bin/compress ${working_dir}`);
     const resp_compress = spawnSync("bin/compress", [working_dir], { cwd: scriptmaker_pwd, shell: true });
 
     if (resp_compress.error)
@@ -209,6 +210,7 @@ const handle_new_brew = async (req, res, next) =>
 
     // PNGify scripts so the frontend can fetch and display it
 
+    console.log(`bin/pngify ${working_dir}`);
     const resp_pngify = spawnSync("bin/pngify", [working_dir], { cwd: scriptmaker_pwd, shell: true });
 
     if (resp_pngify.error)
@@ -223,6 +225,8 @@ const handle_new_brew = async (req, res, next) =>
 
     // Send the rendering ID and PDF links to the client
 
+    console.log(`processed ${script_id}`);
+    
     res.status(200).json({ 
         id: script_id,
         available: available_pdfs,
