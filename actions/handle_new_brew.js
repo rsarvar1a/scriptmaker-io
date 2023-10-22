@@ -210,8 +210,8 @@ const handle_new_brew = async (req, res, next) =>
 
     // PNGify scripts so the frontend can fetch and display it
 
-    console.log(`bin/pngify ${working_dir}`);
-    const resp_pngify = spawnSync("bin/pngify", [working_dir], { cwd: scriptmaker_pwd, shell: true });
+    console.log(`bin/pngify ${path.join(working_dir, script_path)}`);
+    const resp_pngify = spawnSync("bin/pngify", [path.join(working_dir, script_path)], { cwd: scriptmaker_pwd, shell: true });
 
     if (resp_pngify.error)
     {
