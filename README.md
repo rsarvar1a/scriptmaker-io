@@ -55,13 +55,14 @@ if not response.ok:
 
 script_id = response.json()['id']
 available = response.json()['available']
+num_pages = response.json()['pages']
+
+if not os.path.exists("output"):
+    os.mkdir("output")
 
 #
 # Save all available PDFs
 #
-
-if not os.path.exists("output"):
-    os.mkdir("output")
 
 save_dir = f"output/{script_id}"
 if not os.path.exists(save_dir):
@@ -75,6 +76,23 @@ for pdf_type in available:
     else:
         # Significantly likely to be a good time to open a GitHub issue
         print(response_pdf.status_code, response_pdf.content.decode())
+
+#
+# Save all available PNGs
+#
+
+save_dir = f"output/{script_id}/pages"
+if not os.path.exists(save_dir):
+    os.mkdir(save_dir)
+
+for page_num in range(1, num_pages + 1):
+    response_png = requests.get(f"{domain}/api/{script_id}/pages/{page_num}")
+    if response_png.ok:
+        with open(f"{save_dir}/{page_num}.png", "wb") as file:
+            file.write(response_png.content)
+    else:
+        # Another great time to open a GitHub issue
+        print(response_png.status_code, response_png.content.decode())
 ```
 
 ## API reference
@@ -160,14 +178,15 @@ Returns the script id and a list of available `pdftype`s:
 ```json
 {
     "id": "brew-your-edition-name-abc123",
-    "available": ["script", "nightorder", "almanac"]
+    "available": ["script", "nightorder", "almanac"],
+    "pages": 4
 }
 ```
 
 ***
 
 ```http
-GET /api/:script_id/available
+GET /api/:script_id/download
 ```
 
 If `script_id` is a valid script id, returns the script id and a list of available `pdftype`s:
@@ -186,4 +205,26 @@ GET /api/:script_id/download/:pdftype
 
 `pdftype` should be one of `script`, `nightorder`, or `almanac`.
 
-If `pdftype` is available, returns the requested PDF file in the request content.
+If `script_id` is a valid script id, and `pdftype` is available, returns the requested PDF file in the request content.
+
+***
+
+```http
+GET /api/:script_id/pages
+```
+
+If `script_id` is a valid script id, returns the script id and the number of available PNGs:
+```json
+{
+    "id": "brew-your-edition-name-abc123",
+    "pages": 4,
+}
+```
+
+***
+
+```http
+GET /api/:script_id/pages/:page_number
+```
+
+If `script_id` is a valid script id, and `page_number` is in range, returns the corresponding PNG page in the requets content.

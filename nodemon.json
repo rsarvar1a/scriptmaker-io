@@ -1,0 +1,13 @@
+{
+  "legacyWatch": true,
+  "ignore": 
+  [
+    "homebrews",
+    "node_modules",
+    "public",
+    "scriptmaker",
+    "src",
+    "views",
+    "webpack.config.js"
+  ]
+}

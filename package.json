@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "node_modules/.bin/webpack --config webpack.config.js"
+    "build": "node_modules/.bin/webpack --config webpack.config.js",
+    "watch": "node_modules/.bin/nodemon server.js --config nodemon.json"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +20,7 @@
     "jsonschema": "^1.4.1",
     "moment": "^2.29.4",
     "node-fetch": "^2.7.0",
+    "nodemon": "^3.0.1",
     "path": "^0.12.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

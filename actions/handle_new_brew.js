@@ -178,7 +178,7 @@ const handle_new_brew = async (req, res, next) =>
         if (resp_makepdf.error)
         {
             res.status(400).send(`failed to make pdfs: ${resp_makepdf.error.message}`);
-            fs.rmdirSync(working_dir, { recursive: true });
+            fs.rmSync(working_dir, { recursive: true });
             return;
         }
     }
@@ -191,25 +191,42 @@ const handle_new_brew = async (req, res, next) =>
         if (resp_almanac.error)
         {
             res.status(400).send(`failed to make almanac: ${resp_almanac.error.message}`);
-            fs.rmdirSync(working_dir, { recursive: true });
+            fs.rmSync(working_dir, { recursive: true });
             return;
         }
     }
+
+    // Compress PDFs to save space (necessary until I migrate to S3)
 
     const resp_compress = spawnSync("bin/compress", [working_dir], { cwd: scriptmaker_pwd, shell: true });
 
     if (resp_compress.error)
     {
         res.status(500).send(`failed to compress: ${resp_compress.error.message}`);
-        fs.rmdirSync(working_dir, { recursive: true });
+        fs.rmSync(working_dir, { recursive: true });
         return;
     }
+
+    // PNGify scripts so the frontend can fetch and display it
+
+    const resp_pngify = spawnSync("bin/pngify", [working_dir], { cwd: scriptmaker_pwd, shell: true });
+
+    if (resp_pngify.error)
+    {
+        res.status(500).send(`failed to produce images: ${resp_pngify.error.message}`);
+        fs.rmSync(working_dir, { recursive: true });
+        return;
+    }
+
+    const pages_path = path.join(working_dir, "pages");
+    const num_pages = fs.readdirSync(pages_path).length;
 
     // Send the rendering ID and PDF links to the client
 
     res.status(200).json({ 
         id: script_id,
-        available: available_pdfs
+        available: available_pdfs,
+        pages: num_pages
      });
 };
 

@@ -1,19 +1,13 @@
 const fs = require('fs');
 const path = require("path");
 
-const handle_send_pdf = async (req, res, next) => 
+const handle_send_page = async (req, res, next) => 
 {
     const params = req.params;
     const scriptid = params.scriptid;
-    const pdftype = params.pdftype;
+    const pagenum = params.pagenum;
 
     const working_dir = path.join(__dirname, '../homebrews', scriptid);
-
-    if (! ['almanac', 'nightorder', 'script'].includes(pdftype))
-    {
-        res.status(404).send(`invalid resource ${pdftype}`);
-        return;
-    }
 
     try
     {
@@ -23,8 +17,23 @@ const handle_send_pdf = async (req, res, next) =>
 
             const source = JSON.parse(data);
             const name = source.naming_prefix;
-            const attachment_name = `${name}-${pdftype}.pdf`;
-            const target = path.join(working_dir, attachment_name);
+            const attachment_name = `${name}-${pagenum}.png`;
+            const target = path.join(working_dir, "pages", attachment_name);
+            const num_pages = source.pages;
+
+            try
+            {
+                const num = parseInt(pagenum);
+            }
+            catch (err)
+            {
+                throw TypeError("page number must be an int");
+            }
+
+            if (num < 1 || num > num_pages)
+            {
+                throw RangeError("page number out of range");
+            }
 
             fs.readFile(target, (err, data) =>
             {
@@ -42,8 +51,8 @@ const handle_send_pdf = async (req, res, next) =>
     }
     catch (err)
     {
-        res.status(404).send(`could not find ${scriptid}-${pdftype}: ${err}`);
+        res.status(404).send(`could not find ${scriptid}-${pagenum}.png: ${err}`);
     }
 };
 
-module.exports = handle_send_pdf;
+module.exports = handle_send_page;
