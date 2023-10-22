@@ -14,6 +14,14 @@ A front-end for my [scriptmaker](https://github.com/rsarvar1a/scriptmaker) utili
 - deployment
     - Docker, [fly.io](https://fly.io)
 
+# Planned improvements
+
+- frontend
+    - actually have a frontend
+- backend
+    - host files via Amazon S3
+    - manage brews with Postgres
+
 # API
 
 ## Example
