@@ -17,13 +17,18 @@ const handle_send_page = async (req, res, next) =>
 
             const source = JSON.parse(data);
             const name = source.naming_prefix;
+
             const attachment_name = `${name}-${pagenum}.png`;
-            const target = path.join(working_dir, "pages", attachment_name);
+            const pages_dir = path.join(working_dir, "pages");
+            const target = path.join(pages_dir, attachment_name);
+
             const num_pages = source.pages;
+
+            var num = 0;
 
             try
             {
-                const num = parseInt(pagenum);
+                num = parseInt(pagenum);
             }
             catch (err)
             {
@@ -38,7 +43,7 @@ const handle_send_page = async (req, res, next) =>
             fs.readFile(target, (err, data) =>
             {
                 if (err) throw err;
-                res.status(200).sendFile(attachment_name, { root: working_dir }, (err) => 
+                res.status(200).sendFile(attachment_name, { root: pages_dir }, (err) => 
                 {
                     if (err)
                     {
