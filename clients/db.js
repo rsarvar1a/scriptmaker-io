@@ -92,6 +92,29 @@ class PGClient
         }
     };
 
+    // Returns all brews with a matchine name.
+    searchBrews = async (script_name) =>
+    {
+        const client = await this.pool.connect();
+        
+        try 
+        {
+            const statement = `SELECT * FROM ${this.brews} WHERE "name" LIKE '%' || $1 || '%' `;
+            const params = [script_name];
+
+            const response = await client.query(statement, params);
+            return response.rows;
+        }
+        catch (err)
+        {
+            throw Error(`pg: could not search homebrews: ${err}`);
+        }
+        finally 
+        {
+            client.release();
+        }
+    };
+
     // Ensures a brew exists; if not, throws an error
     validateBrew = async (script_id) =>
     {
