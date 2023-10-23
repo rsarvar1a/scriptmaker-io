@@ -1,8 +1,7 @@
 const { Pool } = require("pg");
 
-const pool = new Pool({ 
-    connectionString: process.env.DATABASE_URL
-});
+console.log(`pg: connecting with URI ${process.env.DATABASE_URL}`);
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 class PGClient
 {
@@ -25,7 +24,7 @@ class PGClient
 
         try 
         {
-            const statement = `INSERT INTO ${this.brews}(id, script_name, num_pages) VALUES ($1, $2, $3)`;
+            const statement = `INSERT INTO ${this.brews}(id, "name", pages) VALUES ($1, $2, $3)`;
             const params = [script_id, script_name, num_pages];
 
             await client.query("BEGIN");
@@ -145,7 +144,7 @@ class PGClient
             const statement = `SELECT pdf_type FROM ${this.downloads} WHERE id = $1`;
             const params = [script_id];
 
-            const response = await client.query(statement, query);
+            const response = await client.query(statement, params);
             return response.rows.map((v, i, a) => { return v.pdf_type; });
         }
         catch (err)
@@ -166,7 +165,7 @@ class PGClient
         try 
         {
             await this.validateBrew(script_id);
-            await this.validateDownload(script_id. pdf_type);
+            await this.validateDownload(script_id, pdf_type);
 
             const statement = `SELECT s3_url FROM ${this.downloads} WHERE id = $1 AND pdf_type = $2`;
             const params = [script_id, pdf_type];
@@ -205,7 +204,7 @@ class PGClient
 
             try 
             {
-                const statement = `INSERT INTO ${this.pages}(id, page_number, s3_url) VALUES ($1, $2, $3)`;
+                const statement = `INSERT INTO ${this.pages}(id, page_num, s3_url) VALUES ($1, $2, $3)`;
                 const params = [script_id, page_number, s3_url];
 
                 await client.query("BEGIN");
@@ -232,7 +231,7 @@ class PGClient
     getNumberOfPages = async (script_id) => 
     {
         const resp = await this.getBrew(script_id);
-        return resp.num_pages;
+        return resp.pages;
     };
 
     // Gets a link to a page
@@ -244,7 +243,7 @@ class PGClient
         {
             await this.validatePageNumber(script_id, page_number);
 
-            const statement = `SELECT s3_url FROM ${this.pages} WHERE id = $1 AND page_number = $2`;
+            const statement = `SELECT s3_url FROM ${this.pages} WHERE id = $1 AND page_num = $2`;
             const params = [script_id, page_number];
 
             const response = await client.query(statement, params);

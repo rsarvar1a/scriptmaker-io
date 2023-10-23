@@ -22,6 +22,7 @@ const handle_new_brew = async (req, res, next) =>
     var script_id = "";
     var script_name = "homebrew";
     var available_pdfs = [];
+    var num_pages = 0;
 
     try 
     {
@@ -204,7 +205,7 @@ const handle_new_brew = async (req, res, next) =>
         }
 
         const pages_path = path.join(working_dir, "pages");
-        const num_pages = fs.readdirSync(pages_path).length;
+        num_pages = fs.readdirSync(pages_path).length;
 
         // Create the brew.
 
@@ -236,7 +237,7 @@ const handle_new_brew = async (req, res, next) =>
 
         // Create the PNGs in S3 and save paths to the database
 
-        for (const i = 1; i <= num_pages; i++)
+        for (var i = 1; i <= num_pages; i++)
         {
             const png_basename = `${script_name}-${i}.png`;
             const png_full_path = path.join(working_dir, "pages", png_basename);

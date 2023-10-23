@@ -9,7 +9,7 @@ const handle_available = async (req, res, next) =>
         const pg = new PGClient();
         const available = await pg.getAvailableDownloads(script_id);
 
-        req.status(200).json({ 
+        res.status(200).json({ 
             id: script_id,
             available: available
         });
