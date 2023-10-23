@@ -246,9 +246,10 @@ const handle_new_brew = async (req, res, next) =>
     }
     catch (err)
     {
+        console.log(err);
+
         const pg = new PGClient();
         await pg.destroyBrew(script_id);
-
         res.status(500).send(`failed to brew: ${err}`);
         return;
     }

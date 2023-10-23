@@ -18,7 +18,7 @@ class PGClient
 
         try 
         {
-            const statement = "INSERT INTO brews(id, script_name, num_pages) VALUES ($1, $2, $3)";
+            const statement = "INSERT INTO public.brews(id, script_name, num_pages) VALUES ($1, $2, $3)";
             const params = [script_id, script_name, num_pages];
 
             await client.query("BEGIN");
@@ -43,7 +43,7 @@ class PGClient
 
         try
         {
-            const statement = "DELETE FROM brews WHERE id = $1";
+            const statement = "DELETE FROM public.brews WHERE id = $1";
             const params = [script_id];
             await client.query(statement, params);
         }
@@ -64,7 +64,7 @@ class PGClient
 
         try 
         {
-            const statement = "SELECT * FROM brews WHERE id = $1";
+            const statement = "SELECT * FROM public.brews WHERE id = $1";
             const params = [script_id];
 
             const response = await client.query(statement, params);
@@ -103,7 +103,7 @@ class PGClient
 
             try 
             {
-                const statement = "INSERT INTO downloads(id, pdf_type, s3_url) VALUES ($1, $2, $3)";
+                const statement = "INSERT INTO public.downloads(id, pdf_type, s3_url) VALUES ($1, $2, $3)";
                 const params = [script_id, pdf_type, s3_url];
 
                 await client.query("BEGIN");
@@ -135,7 +135,7 @@ class PGClient
         {
             await this.validateBrew(script_id);
 
-            const statement = "SELECT pdf_type FROM downloads WHERE id = $1";
+            const statement = "SELECT pdf_type FROM public.downloads WHERE id = $1";
             const params = [script_id];
 
             const response = await client.query(statement, query);
@@ -161,7 +161,7 @@ class PGClient
             await this.validateBrew(script_id);
             await this.validateDownload(script_id. pdf_type);
 
-            const statement = "SELECT s3_url FROM downloads WHERE id = $1 AND pdf_type = $2";
+            const statement = "SELECT s3_url FROM public.downloads WHERE id = $1 AND pdf_type = $2";
             const params = [script_id, pdf_type];
 
             const response = await client.query(statement, params);
@@ -198,7 +198,7 @@ class PGClient
 
             try 
             {
-                const statement = "INSERT INTO pages(id, page_number, s3_url) VALUES ($1, $2, $3)";
+                const statement = "INSERT INTO public.pages(id, page_number, s3_url) VALUES ($1, $2, $3)";
                 const params = [script_id, page_number, s3_url];
 
                 await client.query("BEGIN");
@@ -237,7 +237,7 @@ class PGClient
         {
             await this.validatePageNumber(script_id, page_number);
 
-            const statement = "SELECT s3_url FROM pages WHERE id = $1 AND page_number = $2";
+            const statement = "SELECT s3_url FROM public.pages WHERE id = $1 AND page_number = $2";
             const params = [script_id, page_number];
 
             const response = await client.query(statement, params);
