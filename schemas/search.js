@@ -18,7 +18,7 @@ const search_schema =
                         "type": "string",
                         "required": true
                     },
-                    "param":
+                    "input":
                     {
                         "type": "string",
                         "required": true

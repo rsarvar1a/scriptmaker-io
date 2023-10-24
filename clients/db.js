@@ -1,4 +1,6 @@
+const moment = require('moment');
 const { Validator, ValidationError } = require("jsonschema");
+const search_schema = require('../schemas/search');
 const { Pool } = require("pg");
 
 console.log(`pg: connecting with URI ${process.env.DATABASE_URL}`);
@@ -19,14 +21,14 @@ class PGClient
     }
 
     // Creates a brew in the brews table
-    createBrew = async (script_id, script_name, num_pages) => 
+    createBrew = async (script_id, script_name, num_pages, creation_time) => 
     {
         const client = await this.pool.connect();
 
         try 
         {
-            const statement = `INSERT INTO ${this.brews}(id, "name", pages) VALUES ($1, $2, $3)`;
-            const params = [script_id, script_name, num_pages];
+            const statement = `INSERT INTO ${this.brews}(id, "name", pages, created_on) VALUES ($1, $2, $3, $4)`;
+            const params = [script_id, script_name, num_pages, creation_time];
 
             await client.query("BEGIN");
             await client.query(statement, params);
@@ -102,9 +104,9 @@ class PGClient
         {
             // Ensure structure 
 
-            if (! new Validator().validate(query, search_schema))
+            if (! query || ! new Validator().validate(query, search_schema))
             {
-                throw ValidationError("invalid search request structure");
+                throw new ValidationError("invalid search request structure");
             }
 
             // Create WHERE clause
@@ -116,7 +118,7 @@ class PGClient
             for (const condition_block of query.conditions)
             {
                 const condition = condition_block.condition;
-                const input = condition_block.param;
+                const input = condition_block.input;
                 
                 const fragment = (() => 
                 {
@@ -126,18 +128,18 @@ class PGClient
                         case "before":  return `created_on < $${i}`;
                         case "after":   return `created_on > $${i}`;
                     }
-                    throw ValidationError(`invalid condition ${condition}`);
+                    throw new ValidationError(`invalid condition ${condition}`);
                 })();
 
                 const param = (() => 
                 {
                     switch (input)
                     {
-                        case "name":    return input;
-                        case "before":  return Date.parse(input);
-                        case "after":   return Date.parse(input);
+                        case "name":    return input.replaceAll(" ", "_");
+                        case "before":  return moment(input).format("YYYY-MM-DD H:mm:ss.SSSZZ");
+                        case "after":   return moment(input).format("YYYY-MM-DD H:mm:ss.SSSZZ");
                     }
-                    throw ValidationError(`invalid condition ${condition}`);
+                    throw new ValidationError(`invalid condition ${condition}`);
                 })();
 
                 conditions.push(fragment);
@@ -148,24 +150,30 @@ class PGClient
             // Create ORDER BY clause
 
             let orderings = [];
-            
+
             for (const ordering_block of query.order)
             {
                 const by = ordering_block.order_by;
-                const direction = ordering_block.is_ascending;
+                const direction = ordering_block.ascending;
 
                 const validate_by = (() => 
                 {
                     switch (by)
                     {
-                        case "name": return;
-                        case "date": return;
+                        case "name": return true;
+                        case "date": return true;
                     }
-                    throw ValidationError(`invalid ordering ${by}`);
-                });
+                    throw new ValidationError(`invalid ordering ${by}`);
+                })();
 
                 orderings.push(`${by} ${direction ? "ASCENDING" : "DESCENDING"}`);
             }
+
+            // Create limits
+
+            const count = query.limit.count_per_page;
+            const pages = query.limit.page_number;
+            const offset = (pages - 1) * count;
 
             // Create statement
 
@@ -174,6 +182,8 @@ class PGClient
             const limit = `LIMIT ${offset}, ${count}`;
             const statement = `SELECT * FROM ${this.brews} ${where} ${order} ${limit}`;
 
+            console.log(`executing ${statement} with params ${params}`);
+
             // Map response so each brew also contains its available PDFs
 
             const response = await client.query(statement, params);
@@ -181,7 +191,7 @@ class PGClient
             {
                 v['available'] = await this.getAvailableDownloads(v.script_id);
                 return v;
-            }));
+            }, this));
         }
         catch (err)
         {

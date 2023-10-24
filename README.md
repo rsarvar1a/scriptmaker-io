@@ -110,6 +110,7 @@ Returns the script id and a list of available `pdftype`s:
 {
     "id": "brew-your-edition-name-abc123",
     "name": "My Amazing Homebrew Script",
+    "created_on": "timestamp",
     "available": ["script", "nightorder", "almanac"],
     "pages": 4
 }
@@ -121,7 +122,52 @@ Returns the script id and a list of available `pdftype`s:
 POST /api/search
 ```
 
+The request must contain a non-empty array of conditions, and an array of orderings (the orderings array might be empty):
+```json
+{
+    "conditions":
+    [
+        {
+            "condition": "name" or "before" or "after",
+            "input": "script_name" or "date"
+        },
+        ...,
+    ],
 
+    "order":
+    [
+        {
+            "order_by": "name" or "date",
+            "ascending": true or false
+        },
+        ...,
+    ],
+
+    "limit":
+    {
+        "count_per_page": 25,
+        "page_number": 2
+    }
+}
+```
+
+Returns a list of brews matching the input query:
+```json
+{
+    "query": ...,
+    "brews": 
+    [
+        {
+            "id": "brew-your-edition-name-abc123",
+            "name": "My Amazing Homebrew Script",
+            "created_on": "timestamp",
+            "available": ["script", "nightorder", "almanac"],
+            "pages": 4
+        },
+        ...,
+    ]
+}
+```
 
 ***
 
@@ -134,6 +180,8 @@ If `script_id` is a valid script id, returns the script id, name, and page count
 {
     "id": "brew-your-edition-name-abc123",
     "name": "My Amazing Homebrew Script",
+    "created_on": "timestamp",
+    "available": ["script", "nightorder", "almanac"],
     "pages": 4
 }
 ```

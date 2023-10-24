@@ -23,6 +23,7 @@ const handle_new_brew = async (req, res, next) =>
     var script_name = "homebrew";
     var available_pdfs = [];
     var num_pages = 0;
+    var creation_time = moment();
 
     try 
     {
@@ -209,11 +210,13 @@ const handle_new_brew = async (req, res, next) =>
 
         // Create the brew.
 
+        creation_time = moment().format("YYYY-MM-DD H:mm:ss.SSSZZ");
+
         const aws = new AWSClient();
         const pg = new PGClient();
 
         await aws.createBrew(script_id);
-        await pg.createBrew(script_id, script_name, num_pages);
+        await pg.createBrew(script_id, script_name, num_pages, creation_time);
 
         // Upload the PDFs to S3 and save paths to the database
 
@@ -270,12 +273,11 @@ const handle_new_brew = async (req, res, next) =>
 
     console.log(`processed ${script_id}`);
     
-    res.status(200).json({ 
-        id: script_id,
-        name: script_name,
-        available: available_pdfs,
-        pages: num_pages
-    });
+    const pg = new PGClient();
+    const script_info = await pg.getBrew(script_id);
+    script_info['available'] = await pg.getAvailableDownloads(script_id);
+
+    res.status(200).json(script_info);
 };
 
 module.exports = handle_new_brew;
