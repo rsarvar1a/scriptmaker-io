@@ -195,7 +195,7 @@ const handle_new_brew = async (req, res, next) =>
             throw resp_compress.error;
         }
 
-        // PNGify scripts so the frontend can fetch and display it
+        // PNGify documents so the frontend can fetch and display them
 
         console.log(`bin/pngify ${path.join(working_dir, script_path)}`);
         const resp_pngify = spawnSync("bin/pngify", [path.join(working_dir, script_path)], { cwd: scriptmaker_pwd, shell: true });
@@ -205,9 +205,6 @@ const handle_new_brew = async (req, res, next) =>
             throw resp_pngify.error;
         }
 
-        const pages_path = path.join(working_dir, "pages");
-        num_pages = fs.readdirSync(pages_path).length;
-
         // Create the brew.
 
         creation_time = moment().format("YYYY-MM-DD H:mm:ss.SSSZZ");
@@ -216,7 +213,7 @@ const handle_new_brew = async (req, res, next) =>
         const pg = new PGClient();
 
         await aws.createBrew(script_id);
-        await pg.createBrew(script_id, script_name, num_pages, creation_time);
+        await pg.createBrew(script_id, script_name, creation_time);
 
         // Upload the PDFs to S3 and save paths to the database
 
@@ -231,21 +228,24 @@ const handle_new_brew = async (req, res, next) =>
             pdf_basenames['almanac'] = `${script_name}-almanac.pdf`;
         }
 
-        for (const pdf_type in pdf_basenames)
+        for (const document in pdf_basenames)
         {
-            const pdf_full_path = path.join(working_dir, pdf_basenames[pdf_type]);
+            const pages_path = path.join(working_dir, `pages-${document}`);
+            const num_pages = fs.readdirSync(pages_path).length;
+
+            const pdf_full_path = path.join(working_dir, pdf_basenames[document]);
             const url = await aws.uploadDownloadable(script_id, pdf_full_path);
-            await pg.createDownload(script_id, pdf_type, url);
-        }
+            await pg.createDownload(script_id, document, num_pages, url);
+        
+            // Create the PNGs in S3 and save paths to the database
 
-        // Create the PNGs in S3 and save paths to the database
-
-        for (var i = 1; i <= num_pages; i++)
-        {
-            const png_basename = `${script_name}-${i}.png`;
-            const png_full_path = path.join(working_dir, "pages", png_basename);
-            const url = await aws.uploadPage(script_id, png_full_path);
-            await pg.createPage(script_id, i, url);
+            for (var i = 1; i <= num_pages; i++)
+            {
+                const png_basename = `${script_name}-${document}-${i}.png`;
+                const png_full_path = path.join(pages_path, png_basename);
+                const url = await aws.uploadPage(script_id, png_full_path);
+                await pg.createPage(script_id, document, i, url);
+            }
         }
     }
     catch (err)
@@ -275,8 +275,6 @@ const handle_new_brew = async (req, res, next) =>
     
     const pg = new PGClient();
     const script_info = await pg.getBrew(script_id);
-    script_info['available'] = await pg.getAvailableDownloads(script_id);
-
     res.status(200).json(script_info);
 };
 

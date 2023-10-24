@@ -14,21 +14,19 @@ class PGClient
 
         this.public_prefix = `"public".`;
         this.brews = `${this.public_prefix}"brews"`;
-        this.downloads = `${this.public_prefix}"downloads"`;
+        this.documents = `${this.public_prefix}"documents"`;
         this.pages = `${this.public_prefix}"pages"`;
-
-        console.log(`pg: referencing tables with syntax ${this.brews}`);
     }
 
     // Creates a brew in the brews table
-    createBrew = async (script_id, script_name, num_pages, creation_time) => 
+    createBrew = async (script_id, script_name, creation_time) => 
     {
         const client = await this.pool.connect();
 
         try 
         {
-            const statement = `INSERT INTO ${this.brews}(id, "name", pages, created_on) VALUES ($1, $2, $3, $4)`;
-            const params = [script_id, script_name, num_pages, creation_time];
+            const statement = `INSERT INTO ${this.brews}(id, "name", created_on) VALUES ($1, $2, $3)`;
+            const params = [script_id, script_name, creation_time];
 
             await client.query("BEGIN");
             await client.query(statement, params);
@@ -95,7 +93,7 @@ class PGClient
         }
     };
 
-    // Returns all brews with a matchine name.
+    // Returns all brews matching on a query
     searchBrews = async (query) =>
     {
         const client = await this.pool.connect();
@@ -187,11 +185,7 @@ class PGClient
             // Map response so each brew also contains its available PDFs
 
             const response = await client.query(statement, params);
-            return await Promise.all(response.rows.map(async (v, i, a) =>
-            {
-                v['available'] = await this.getAvailableDownloads(v.script_id);
-                return v;
-            }, this));
+            return response.rows;
         }
         catch (err)
         {
@@ -210,7 +204,7 @@ class PGClient
     };
 
     // Saves a download link for this brew
-    createDownload = async (script_id, pdf_type, s3_url) => 
+    createDocument = async (script_id, document, pages, url) => 
     {
         const client = await this.pool.connect();
 
@@ -220,8 +214,8 @@ class PGClient
 
             try 
             {
-                const statement = `INSERT INTO ${this.downloads}(id, pdf_type, s3_url) VALUES ($1, $2, $3)`;
-                const params = [script_id, pdf_type, s3_url];
+                const statement = `INSERT INTO ${this.documents}(id, "document", pages, url) VALUES ($1, $2, $3, $4)`;
+                const params = [script_id, document, pages, url];
 
                 await client.query("BEGIN");
                 await client.query(statement, params);
@@ -235,7 +229,7 @@ class PGClient
         }
         catch (err)
         {
-            throw Error(`pg: failed to create download ${script_id}/${pdf_type}: ${err}`);
+            throw Error(`pg: failed to create document ${script_id}/${document}: ${err}`);
         }
         finally
         {
@@ -244,7 +238,7 @@ class PGClient
     };
 
     // Gets the available PDF types for this brew
-    getAvailableDownloads = async (script_id) =>
+    getDocuments = async (script_id) =>
     {
         const client = await this.pool.connect();
 
@@ -252,11 +246,11 @@ class PGClient
         {
             await this.validateBrew(script_id);
 
-            const statement = `SELECT pdf_type FROM ${this.downloads} WHERE id = $1`;
+            const statement = `SELECT "document" FROM ${this.documents} WHERE id = $1`;
             const params = [script_id];
 
             const response = await client.query(statement, params);
-            return response.rows.map((v, i, a) => { return v.pdf_type; });
+            return response.rows.map((v, i, a) => { return v.document; });
         }
         catch (err)
         {
@@ -268,25 +262,25 @@ class PGClient
         }
     };
 
-    // Gets a link to a PDF
-    getDownload = async (script_id, pdf_type) => 
+    // Gets info on a specific PDF
+    getDocument = async (script_id, document) => 
     {
         const client = await this.pool.connect();
 
         try 
         {
             await this.validateBrew(script_id);
-            await this.validateDownload(script_id, pdf_type);
+            await this.validateDocument(script_id, document);
 
-            const statement = `SELECT s3_url FROM ${this.downloads} WHERE id = $1 AND pdf_type = $2`;
-            const params = [script_id, pdf_type];
+            const statement = `SELECT * FROM ${this.documents} WHERE id = $1 AND "document" = $2`;
+            const params = [script_id, document];
 
             const response = await client.query(statement, params);
-            return response.rows[0].s3_url;
+            return response.rows[0];
         }
         catch (err)
         {
-            throw Error(`pg: failed to get download ${script_id}/${pdf_type}: ${err}`);
+            throw Error(`pg: failed to get document ${script_id}/${document}: ${err}`);
         }
         finally
         {
@@ -295,28 +289,28 @@ class PGClient
     };
 
     // Ensures the brew exists, and that the pdf type is valid for the brew
-    validateDownload = async (script_id, pdf_type) =>
+    validateDocument = async (script_id, document) =>
     {
-        const types = await this.getAvailableDownloads(script_id);
-        if (! types.includes(pdf_type))
+        const documents = await this.getDocuments(script_id);
+        if (! documents.includes(document))
         {
-            throw Error(`no url for object ${pdf_type}`);
+            throw Error(`no url for object ${document}`);
         }
     };
 
     // Saves a page link for this brew
-    createPage = async (script_id, page_number, s3_url) => 
+    createPage = async (script_id, document, page_number, url) => 
     {
         const client = await this.pool.connect();
 
         try 
         {
-            await this.validatePageNumber(script_id, page_number);
+            await this.validatePageNumber(script_id, document, page_number);
 
             try 
             {
-                const statement = `INSERT INTO ${this.pages}(id, page_num, s3_url) VALUES ($1, $2, $3)`;
-                const params = [script_id, page_number, s3_url];
+                const statement = `INSERT INTO ${this.pages}(id, "document", page_num, url) VALUES ($1, $2, $3, $4)`;
+                const params = [script_id, document, page_number, url];
 
                 await client.query("BEGIN");
                 await client.query(statement, params);
@@ -330,7 +324,7 @@ class PGClient
         }
         catch(err)
         {
-            throw Error(`pg: failed to create page ${script_id}/${page_number}: ${err}`);
+            throw Error(`pg: failed to create page ${script_id}/${document}/${page_number}: ${err}`);
         }
         finally
         {
@@ -339,14 +333,39 @@ class PGClient
     };
 
     // Gets the number of pages in this brew
-    getNumberOfPages = async (script_id) => 
+    getNumberOfPages = async (script_id, document) => 
     {
-        const resp = await this.getBrew(script_id);
+        const resp = await this.getDocument(script_id, document);
         return resp.pages;
     };
 
+    // Gets all of the links to pages
+    getPages = async (script_id, document) =>
+    {
+        const client = await this.pool.connect();
+
+        try 
+        {
+            await this.validateDocument(script_id, document);
+
+            const statement = `SELECT page, url FROM ${this.pages} WHERE id = $1 AND "document" = $2`;
+            const params = [script_id, document];
+
+            const response = await client.query(statement, params);
+            return response.rows;
+        }
+        catch (err)
+        {
+            throw Error(`pg: failed to get pages for ${script_id}/${document}: ${err}`);
+        }
+        finally
+        {
+            client.release();
+        }    
+    };
+
     // Gets a link to a page
-    getPage = async (script_id, page_number) => 
+    getPage = async (script_id, document, page_number) => 
     {
         const client = await this.pool.connect();
 
@@ -354,15 +373,15 @@ class PGClient
         {
             await this.validatePageNumber(script_id, page_number);
 
-            const statement = `SELECT s3_url FROM ${this.pages} WHERE id = $1 AND page_num = $2`;
-            const params = [script_id, page_number];
+            const statement = `SELECT url FROM ${this.pages} WHERE id = $1 AND "document" = $2 AND page = $3`;
+            const params = [script_id, document, page_number];
 
             const response = await client.query(statement, params);
-            return response.rows[0].s3_url;
+            return response.rows[0].url;
         }
         catch (err)
         {
-            throw Error(`pg: failed to get page ${script_id}/${page_number}: ${err}`);
+            throw Error(`pg: failed to get page ${script_id}/${document}/${page_number}: ${err}`);
         }
         finally
         {
@@ -371,13 +390,13 @@ class PGClient
     };
 
     // Ensures that the brew exists, and that the page number is valid for the brew
-    validatePageNumber = async (script_id, page_number) =>
+    validatePageNumber = async (script_id, document, page_number) =>
     {
-        const num_pages = await this.getNumberOfPages(script_id);
+        const num_pages = await this.getNumberOfPages(script_id, document);
         
         if (page_number < 1 || page_number > num_pages)
         {
-            throw RangeError(`${script_id}/${page_number} is out of range`);
+            throw RangeError(`${script_id}/${document}/${page_number} is out of range`);
         }
     }
 }
