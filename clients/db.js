@@ -106,7 +106,7 @@ class PGClient
 
             if (! query || ! new Validator().validate(query, search_schema))
             {
-                throw new ValidationError("invalid search request structure");
+                throw new ValidationError("invalid search request structure", query, search_schema);
             }
 
             // Create WHERE clause
@@ -120,7 +120,7 @@ class PGClient
                 const condition = condition_block.condition;
                 const input = condition_block.input;
                 
-                const fragment = (() => 
+                const fragment = ((condition, i) => 
                 {
                     switch (condition)
                     {
@@ -128,19 +128,19 @@ class PGClient
                         case "before":  return `created_on < $${i}`;
                         case "after":   return `created_on > $${i}`;
                     }
-                    throw new ValidationError(`invalid condition ${condition}`);
-                })();
+                    throw Error(`invalid condition ${condition}`);
+                })(condition, i);
 
-                const param = (() => 
+                const param = ((condition, input) => 
                 {
-                    switch (input)
+                    switch (condition)
                     {
                         case "name":    return input.replaceAll(" ", "_");
                         case "before":  return moment(input).format("YYYY-MM-DD H:mm:ss.SSSZZ");
                         case "after":   return moment(input).format("YYYY-MM-DD H:mm:ss.SSSZZ");
                     }
-                    throw new ValidationError(`invalid condition ${condition}`);
-                })();
+                    throw Error(`invalid condition ${condition}`);
+                })(condition, input);
 
                 conditions.push(fragment);
                 params.push(param);
@@ -156,17 +156,17 @@ class PGClient
                 const by = ordering_block.order_by;
                 const direction = ordering_block.ascending;
 
-                const validate_by = (() => 
+                const validate_by = ((by) => 
                 {
                     switch (by)
                     {
-                        case "name": return true;
-                        case "date": return true;
+                        case "name": return `"name"`;
+                        case "date": return `created_on`;
                     }
-                    throw new ValidationError(`invalid ordering ${by}`);
-                })();
+                    throw Error(`invalid ordering ${by}`);
+                })(by);
 
-                orderings.push(`${by} ${direction ? "ASCENDING" : "DESCENDING"}`);
+                orderings.push(`${validate_by} ${direction ? "ASC" : "DESC"}`);
             }
 
             // Create limits
