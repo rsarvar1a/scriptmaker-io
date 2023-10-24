@@ -70,7 +70,7 @@ class AWSClient
     };
 
     // Uploads ${script_id}/${pdf_type} to the S3 bucket; returns the object URL
-    uploadDownloadable = async (script_id, file_path) => 
+    uploadDocument = async (script_id, file_path) => 
     {
         try 
         {
@@ -89,12 +89,12 @@ class AWSClient
     };
 
     // Uploads ${script_id}/${page_num} to the S3 bucket; returns the object URL
-    uploadPage = async (script_id, file_path) =>
+    uploadPage = async (script_id, document, file_path) =>
     {
         try 
         {
             const folder = await this.createBrew(script_id);
-            const pages_folder = `${folder}pages/`;
+            const pages_folder = `${folder}pages/${document}/`;
             const name = path.basename(file_path);
             const key = `${pages_folder}${name}`;
             const url = this.constructUrl(key);

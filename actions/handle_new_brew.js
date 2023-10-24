@@ -234,8 +234,8 @@ const handle_new_brew = async (req, res, next) =>
             const num_pages = fs.readdirSync(pages_path).length;
 
             const pdf_full_path = path.join(working_dir, pdf_basenames[document]);
-            const url = await aws.uploadDownloadable(script_id, pdf_full_path);
-            await pg.createDownload(script_id, document, num_pages, url);
+            const url = await aws.uploadDocument(script_id, pdf_full_path);
+            await pg.createDocument(script_id, document, num_pages, url);
         
             // Create the PNGs in S3 and save paths to the database
 
@@ -243,7 +243,7 @@ const handle_new_brew = async (req, res, next) =>
             {
                 const png_basename = `${script_name}-${document}-${i}.png`;
                 const png_full_path = path.join(pages_path, png_basename);
-                const url = await aws.uploadPage(script_id, png_full_path);
+                const url = await aws.uploadPage(script_id, document, png_full_path);
                 await pg.createPage(script_id, document, i, url);
             }
         }
