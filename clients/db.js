@@ -178,8 +178,8 @@ class PGClient
             // Create statement
 
             const where = `WHERE ${conditions.join(" AND ")}`;
-            const order = orderings.length > 0 ? `ORDER BY ${orderings.join(" ")}` : ``;
-            const limit = `LIMIT ${offset}, ${count}`;
+            const order = orderings.length > 0 ? `ORDER BY ${orderings.join(", ")}` : ``;
+            const limit = `LIMIT ${count} OFFSET ${offset}`;
             const statement = `SELECT * FROM ${this.brews} ${where} ${order} ${limit}`;
 
             console.log(`executing ${statement} with params ${params}`);

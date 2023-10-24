@@ -1,37 +1,26 @@
-const webpack = require('webpack');
 const path = require('path');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const config = {
     entry: './src/index.js',
     output: {
-        path: path.resolve(__dirname, 'public'),
+        path: path.resolve(__dirname, 'dist'),
         filename: 'bundle.js'
     },
     module: {
         rules: [
             {
                 test: /\.(js|jsx)$/,
+                exclude: /node_modules/,
                 use: 'babel-loader',
-                exclude: /node_modules/
             },
             {
                 test: /\.css$/,
-                use: [
-                    MiniCssExtractPlugin.loader,
-                    'css-loader'
-                ]
+                use: ['style-loader', 'css-loader', 'postcss-loader']
             },
             {
                 test: /\.png$/,
-                use: [
-                    {
-                        loader: 'url-loader',
-                        options: {
-                            mimetype: 'image/png'
-                        }
-                    }
-                ]
+                use: 'file-loader'
             },
             {
                 test: /\.svg$/,
@@ -40,7 +29,10 @@ const config = {
         ]
     },
     plugins: [
-        new MiniCssExtractPlugin()
+        new HtmlWebpackPlugin({
+            template: path.join(__dirname, 'public', 'index.html'),
+            name: "index.html"
+        })
     ]
 };
 

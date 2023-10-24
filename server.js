@@ -22,11 +22,9 @@ const path = require('path');
 
 const app = express();
 const httpserver = Server(app);
+const dist = path.join(__dirname, "dist");
 
-app.use('/', express.static(__dirname + '/public'));
-app.use('/homebrews', express.static(__dirname + '/homebrews'));
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
+app.use(express.static(dist));
 app.use(express.json());
 
 // Create homebrew route
@@ -49,11 +47,12 @@ app.get('/api/:scriptid/pages/:pagenum', handle_send_page);
 
 app.get('*', (req, res) => 
 {
-    res.render('app');
+    res.sendFile(path.join(dist, "index.html"));
 });
 
 // Start server
 
-httpserver.listen(3000, () => {
+httpserver.listen(3000, () => 
+{
     console.log("Ready and listening on port 3000.");
 });
