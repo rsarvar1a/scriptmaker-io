@@ -1,13 +1,9 @@
 import React from "react";
 
-class App extends React.Component 
+export default class App extends React.Component
 {
-  render() 
-  {
-    return (
-      <h1 class="text-teal-800">Hello, world!</h1>
-    );
-  }
+    render()
+    {
+        return <h1 class="bg-slate-800">scriptmaker.fly.dev</h1>
+    }
 }
-
-export default App;

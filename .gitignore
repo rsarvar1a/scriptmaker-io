@@ -133,9 +133,6 @@ dist
 # Working directory
 homebrews/
 
-# generated
-public/
-
 # scriptmaker is cloned instead
 **/scriptmaker
 
