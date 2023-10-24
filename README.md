@@ -24,7 +24,7 @@ A front-end for my [scriptmaker](https://github.com/rsarvar1a/scriptmaker) utili
 
 ## Example
 
-Coming soon...
+You can find some (really basic) examples [here.](https://github.com/rsarvar1a/scriptmaker-examples)
 
 ## API reference
 
