@@ -309,7 +309,7 @@ class PGClient
 
             try 
             {
-                const statement = `INSERT INTO ${this.pages}(id, "document", page_num, url) VALUES ($1, $2, $3, $4)`;
+                const statement = `INSERT INTO ${this.pages}(id, "document", page, url) VALUES ($1, $2, $3, $4)`;
                 const params = [script_id, document, page_number, url];
 
                 await client.query("BEGIN");
