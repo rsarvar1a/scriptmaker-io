@@ -6,10 +6,10 @@ A front-end for my [scriptmaker](https://github.com/rsarvar1a/scriptmaker) utili
 
 - frontend
     - `scriptmaker.fly.dev/`
-        - React, ejs
+        - React, Tailwind CSS
 - backend
     - `scriptmaker.fly.dev/api`
-        - Node.js, express.js, webpack, Postgres, Amazon S3
+        - Node.js, express.js, ejs, webpack, Postgres, Amazon S3
     - `scriptmaker`
         - Python, poetry, jinja2, weasyprint, ghostscript
 - deployment
