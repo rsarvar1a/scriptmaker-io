@@ -105,14 +105,12 @@ nightorder will probably not be very useful. In that case, you can also include 
 
 The nightorder supports four special ids. These are `DUSK`, `DAWN`, `DEMON` (info) and `MINION` (info).
 
-Returns the script id and a list of available `pdftype`s:
+Returns the script id and properties:
 ```json
 {
     "id": "brew-your-edition-name-abc123",
     "name": "My Amazing Homebrew Script",
     "created_on": "timestamp",
-    "available": ["script", "nightorder", "almanac"],
-    "pages": 4
 }
 ```
 
@@ -160,9 +158,7 @@ Returns a list of brews matching the input query:
         {
             "id": "brew-your-edition-name-abc123",
             "name": "My Amazing Homebrew Script",
-            "created_on": "timestamp",
-            "available": ["script", "nightorder", "almanac"],
-            "pages": 4
+            "created_on": "timestamp"
         },
         ...,
     ]
@@ -175,24 +171,22 @@ Returns a list of brews matching the input query:
 GET /api/:script_id
 ```
 
-If `script_id` is a valid script id, returns the script id, name, and page count:
+If `script_id` is a valid script id, returns the script id, name, and creation date:
 ```json
 {
     "id": "brew-your-edition-name-abc123",
     "name": "My Amazing Homebrew Script",
     "created_on": "timestamp",
-    "available": ["script", "nightorder", "almanac"],
-    "pages": 4
 }
 ```
 
 ***
 
 ```http
-GET /api/:script_id/download
+GET /api/:script_id/documents
 ```
 
-If `script_id` is a valid script id, returns the script id and a list of available `pdftype`s:
+If `script_id` is a valid script id, returns the script id and a list of available documents:
 ```json
 {
     "id": "brew-your-edition-name-abc123",
@@ -203,31 +197,71 @@ If `script_id` is a valid script id, returns the script id and a list of availab
 ***
 
 ```http
-GET /api/:script_id/download/:pdftype
+GET /api/:script_id/documents/:document
 ```
 
-`pdftype` should be one of `script`, `nightorder`, or `almanac`.
+`document` should be one of `script`, `nightorder`, or `almanac`.
 
-If `script_id` is a valid script id, and `pdftype` is available, redirects to the file on S3.
+If `script_id` is a valid script id, and `document` is available, returns information about that document:
 
-***
-
-```http
-GET /api/:script_id/pages
-```
-
-If `script_id` is a valid script id, returns the script id and the number of available PNGs:
 ```json
 {
     "id": "brew-your-edition-name-abc123",
-    "pages": 4,
+    "document": "script",
+    "url": "s3.amazonaws.com/scriptmaker.fly.dev/script-url.pdf",
+    "pages": 2
 }
 ```
 
 ***
 
 ```http
-GET /api/:script_id/pages/:page_number
+GET /api/:script_id/documents/:document/download
 ```
 
-If `script_id` is a valid script id, and `page_number` is in range, redirects to the file on S3.
+If `script_id` is a valid script id, and `document` is available, redirects to S3.
+
+***
+
+```http
+GET /api/:script_id/documents/:document/pages
+```
+
+If `script_id` is a valid script id, and `document` is available, returns the page count:
+```json
+{
+    "id": "brew-your-edition-name-abc123",
+    "document": "script",
+    "pages": 2
+}
+```
+
+***
+
+```http
+GET /api/:script_id/documents/:document/pages/all
+```
+
+If `script_id` is a valid script id, and `document` is available, returns all available pages:
+```json
+{
+    "id": "brew-your-edition-name-abc123",
+    "document": "script",
+    "pages": 
+    [
+        {
+            "page": 1,
+            "url": "path-to-page.png"
+        },
+        ...,
+    ]
+}
+```
+
+***
+
+```http
+GET /api/:script_id/documents/:document/pages/:page
+```
+
+If `script_id` is a valid script id, `document` is available, and `page` is in range, redirects to S3.
