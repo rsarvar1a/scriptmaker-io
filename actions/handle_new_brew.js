@@ -230,7 +230,7 @@ const handle_new_brew = async (req, res, next) =>
 
         for (const document in pdf_basenames)
         {
-            const pages_path = path.join(working_dir, `pages-${document}`);
+            const pages_path = path.join(working_dir, `pages`, `${document}`);
             const num_pages = fs.readdirSync(pages_path).length;
 
             const pdf_full_path = path.join(working_dir, pdf_basenames[document]);
