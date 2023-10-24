@@ -1,3 +1,4 @@
+const { Validator, ValidationError } = require("jsonschema");
 const { Pool } = require("pg");
 
 console.log(`pg: connecting with URI ${process.env.DATABASE_URL}`);
@@ -93,17 +94,94 @@ class PGClient
     };
 
     // Returns all brews with a matchine name.
-    searchBrews = async (script_name) =>
+    searchBrews = async (query) =>
     {
         const client = await this.pool.connect();
         
         try 
         {
-            const statement = `SELECT * FROM ${this.brews} WHERE "name" LIKE '%' || $1 || '%' `;
-            const params = [script_name];
+            // Ensure structure 
+
+            if (! new Validator().validate(query, search_schema))
+            {
+                throw ValidationError("invalid search request structure");
+            }
+
+            // Create WHERE clause
+
+            let i = 1;
+            let conditions = [];
+            let params = [];
+
+            for (const condition_block of query.conditions)
+            {
+                const condition = condition_block.condition;
+                const input = condition_block.param;
+                
+                const fragment = (() => 
+                {
+                    switch (condition)
+                    {
+                        case "name":    return `"name" LIKE '%' || $${i} || '%'`;
+                        case "before":  return `created_on < $${i}`;
+                        case "after":   return `created_on > $${i}`;
+                    }
+                    throw ValidationError(`invalid condition ${condition}`);
+                })();
+
+                const param = (() => 
+                {
+                    switch (input)
+                    {
+                        case "name":    return input;
+                        case "before":  return Date.parse(input);
+                        case "after":   return Date.parse(input);
+                    }
+                    throw ValidationError(`invalid condition ${condition}`);
+                })();
+
+                conditions.push(fragment);
+                params.push(param);
+                i += 1;
+            }
+
+            // Create ORDER BY clause
+
+            let orderings = [];
+            
+            for (const ordering_block of query.order)
+            {
+                const by = ordering_block.order_by;
+                const direction = ordering_block.is_ascending;
+
+                const validate_by = (() => 
+                {
+                    switch (by)
+                    {
+                        case "name": return;
+                        case "date": return;
+                    }
+                    throw ValidationError(`invalid ordering ${by}`);
+                });
+
+                orderings.push(`${by} ${direction ? "ASCENDING" : "DESCENDING"}`);
+            }
+
+            // Create statement
+
+            const where = `WHERE ${conditions.join(" AND ")}`;
+            const order = orderings.length > 0 ? `ORDER BY ${orderings.join(" ")}` : ``;
+            const limit = `LIMIT ${offset}, ${count}`;
+            const statement = `SELECT * FROM ${this.brews} ${where} ${order} ${limit}`;
+
+            // Map response so each brew also contains its available PDFs
 
             const response = await client.query(statement, params);
-            return response.rows;
+            return await Promise.all(response.rows.map(async (v, i, a) =>
+            {
+                v['available'] = await this.getAvailableDownloads(v.script_id);
+                return v;
+            }));
         }
         catch (err)
         {

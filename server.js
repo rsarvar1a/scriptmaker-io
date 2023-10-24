@@ -35,7 +35,7 @@ app.post('/api/brew', handle_new_brew);
 
 // Informational routes
 
-app.get("/api/search", handle_search);
+app.post("/api/search", handle_search);
 
 app.get('/api/:scriptid', handle_script_info);
 

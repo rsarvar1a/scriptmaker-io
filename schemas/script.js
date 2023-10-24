@@ -10,7 +10,8 @@ const script_schema =
         {
             "id": 
             {
-                "type": "string"
+                "type": "string",
+                "required": true
             }
         }
     }

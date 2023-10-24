@@ -118,6 +118,14 @@ Returns the script id and a list of available `pdftype`s:
 ***
 
 ```http
+POST /api/search
+```
+
+
+
+***
+
+```http
 GET /api/:script_id
 ```
 

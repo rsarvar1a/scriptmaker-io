@@ -1,20 +1,21 @@
 const PGClient = require("../clients/db");
 
+// Request validation
+
+const { Validator } = require('jsonschema');
+const search_schema = require('../schemas/search');
+
 const handle_search = async (req, res, next) =>
 {
     try 
     {
-        if (! 'script_name' in req.body)
-        {
-            throw Error("missing search parameter script_name");
-        }
+        const query = req.body;
 
-        const script_name = req.body.script_name.replaceAll(" ", "_");
         const db = new PGClient();
-        const rows = await db.searchBrews(script_name);
+        const rows = await db.searchBrews(query);
         
         res.status(200).json({
-            query: script_name,
+            query: query,
             brews: rows
         });
     }
