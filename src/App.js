@@ -1,8 +1,13 @@
 import React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-import Root from "./components/RootView";
-import ErrorRoot from "./components/ErrorView";
+import Root from "./components/Root";
+import ErrorPage from "./components/ErrorPage";
+
+import Home from "./components/Home";
+import CreateBrewPane from "./components/CreatePane";
+import SearchPane from "./components/SearchPane";
+import ScriptPane from "./components/ScriptPane";
 
 export default class App extends React.Component
 {
@@ -12,12 +17,24 @@ export default class App extends React.Component
             {
                 path: "/",
                 element: <Root />,
-                errorElement: <ErrorRoot />,
+                errorElement: <ErrorPage />,
                 children:
                 [
                     {
-                        path: "create",
-                        
+                        index: true,
+                        element: <Home />
+                    },
+                    {
+                        path: "/create",
+                        element: <CreateBrewPane />
+                    },
+                    {
+                        path: "/search",
+                        element: <SearchPane />,
+                    },
+                    {
+                        path: "/script/:id",
+                        element: <ScriptPane />
                     }
                 ]
             }

@@ -69,6 +69,39 @@ class AWSClient
         }
     };
 
+    // Uploads ${script_id}/{script_name}.json to the S3 bucket; returns the object URL
+    uploadJson = async (script_id, file_path) =>
+    {
+        try 
+        {
+            const folder = await this.createBrew(script_id);
+            const name = path.basename(file_path);
+            const key = `${folder}${name}`;
+            const url = this.constructUrl(key);
+
+            await this.uploadFile(key, file_path);
+            return url;
+        }
+    }
+
+    // Uploads ${script_id}/logo.png to the S3 bucket; returns the object URL
+    uploadLogo = async (script_id, file_path) =>
+    {
+        try
+        {
+            const folder = await this.createBrew(script_id);
+            const key = `${folder}logo.png`;
+            const url = this.constructUrl(key);
+
+            await this.uploadFile(key, file_path);
+            return url;
+        }
+        catch (err)
+        {
+            throw Error(`could not upload logo for ${script_id}: ${err}`);
+        }
+    };
+
     // Uploads ${script_id}/${pdf_type} to the S3 bucket; returns the object URL
     uploadDocument = async (script_id, file_path) => 
     {

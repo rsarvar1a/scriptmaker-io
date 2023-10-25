@@ -19,14 +19,14 @@ class PGClient
     }
 
     // Creates a brew in the brews table
-    createBrew = async (script_id, script_name, creation_time) => 
+    createBrew = async (script_id, script_name, creation_time, json_url, logo_url) => 
     {
         const client = await this.pool.connect();
 
         try 
         {
-            const statement = `INSERT INTO ${this.brews}(id, "name", created_on) VALUES ($1, $2, $3)`;
-            const params = [script_id, script_name, creation_time];
+            const statement = `INSERT INTO ${this.brews}(id, "name", created_on, json_url, logo_url) VALUES ($1, $2, $3, $4, $5)`;
+            const params = [script_id, script_name, creation_time, json_url, logo_url];
 
             await client.query("BEGIN");
             await client.query(statement, params);

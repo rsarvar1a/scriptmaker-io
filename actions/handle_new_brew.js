@@ -21,6 +21,7 @@ const handle_new_brew = async (req, res, next) =>
     var working_dir = "";
     var script_id = "";
     var script_name = "homebrew";
+    var logo_url = null;
     var available_pdfs = [];
     var num_pages = 0;
     var creation_time = moment();
@@ -98,6 +99,18 @@ const handle_new_brew = async (req, res, next) =>
                 break;
             }
         }
+
+        // Determine if there's a script logo to be used.
+
+        for (const entry of script_content)
+        {
+            if (entry.id == "_meta" && "logo" in entry)
+            {
+                logo_url = entry.logo;
+            }
+        }
+
+        // Create everything.
 
         const nightorder_path = "nightorder.json";
         const script_path = `${script_name}.json`;
@@ -213,7 +226,27 @@ const handle_new_brew = async (req, res, next) =>
         const pg = new PGClient();
 
         await aws.createBrew(script_id);
-        await pg.createBrew(script_id, script_name, creation_time);
+
+        // Figure out a logo, either by copying the script-provided one or just linking to the default
+
+        if (! logo_url)
+        {
+            logo_url = aws.constructUrl("logo.png");
+        }
+        else
+        {
+            const resp = await fetch(logo_url);
+            const logo_path = path.join(working_dir, "logo.png");
+            fs.writeFileSync(logo_path, resp.body);
+            logo_url = await aws.uploadLogo(script_id, logo_path);
+        }
+
+        // Upload the JSON to S3 so that we can create the database entry
+
+        const json_path = path.join(working_dir, script_path);
+        const json_url = await aws.uploadJson(script_id, json_path);
+
+        await pg.createBrew(script_id, script_name, creation_time, json_url, logo_url);
 
         // Upload the PDFs to S3 and save paths to the database
 

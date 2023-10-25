@@ -266,3 +266,19 @@ GET /api/:script_id/documents/:document/pages/:page
 ```
 
 If `script_id` is a valid script id, `document` is available, and `page` is in range, redirects to S3.
+
+***
+
+```http
+GET /api/:script_id/logo
+```
+
+If `script_id` is a valid script id, redirects to the logo on S3.
+
+***
+
+```http
+GET /api/:script_id/script
+```
+
+If `script_id` is a valid script id, redirects to the script JSON on S3.

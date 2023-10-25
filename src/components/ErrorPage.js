@@ -1,7 +1,7 @@
 import React from "react";
 import { useRouteError } from "react-router-dom";
 
-export default class ErrorView extends React.Component
+export default class ErrorPage extends React.Component
 {
     render() 
     {
