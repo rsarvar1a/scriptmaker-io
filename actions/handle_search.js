@@ -12,10 +12,11 @@ const handle_search = async (req, res, next) =>
         const query = req.body;
 
         const db = new PGClient();
-        const rows = await db.searchBrews(query);
+        const { row_count, rows } = await db.searchBrews(query);
         
         res.status(200).json({
             query: query,
+            total_rows: row_count,
             brews: rows
         });
     }

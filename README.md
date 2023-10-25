@@ -149,10 +149,11 @@ The request must contain a non-empty array of conditions, and an array of orderi
 }
 ```
 
-Returns a list of brews matching the input query:
+Returns a list of brews matching the input query, as well as a total matching row count:
 ```json
 {
     "query": ...,
+    "total_count": 5000,
     "brews": 
     [
         {

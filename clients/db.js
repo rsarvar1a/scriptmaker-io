@@ -178,14 +178,20 @@ class PGClient
             const where = `WHERE ${conditions.join(" AND ")}`;
             const order = orderings.length > 0 ? `ORDER BY ${orderings.join(", ")}` : ``;
             const limit = `LIMIT ${count} OFFSET ${offset}`;
-            const statement = `SELECT * FROM ${this.brews} ${where} ${order} ${limit}`;
+            const statement = `WITH cte AS (SELECT * FROM ${this.brews} ${where}) SELECT * FROM (TABLE cte ${order} ${limit}) sub RIGHT JOIN (SELECT COUNT(*) FROM cte) c(full_count) ON true`;
 
             console.log(`executing ${statement} with params ${params}`);
 
             // Map response so each brew also contains its available PDFs
 
             const response = await client.query(statement, params);
-            return response.rows;
+            const row_count = response.rows[0].full_count;
+            const rows = response.rows.map((v, i, a) => {
+                delete v.full_count;
+                return v;
+            });
+
+            return { row_count, rows };
         }
         catch (err)
         {
