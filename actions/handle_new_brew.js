@@ -3,6 +3,8 @@ const fs = require('fs');
 const moment = require('moment');
 const path = require("path");
 const { spawnSync } = require("child_process");
+const { promisify } = require('util');
+const { pipeline } = require('stream');
 
 // Clients
 
@@ -14,7 +16,7 @@ const PGClient = require("../clients/db");
 const { Validator } = require('jsonschema');
 const nightorder_schema = require('../schemas/nightorder')
 const script_schema = require("../schemas/script")
-const upload_schema = require('../schemas/upload')
+const upload_schema = require('../schemas/upload');
 
 const handle_new_brew = async (req, res, next) => 
 {
@@ -237,7 +239,9 @@ const handle_new_brew = async (req, res, next) =>
         {
             const resp = await fetch(logo_url);
             const logo_path = path.join(working_dir, "logo.png");
-            fs.writeFileSync(logo_path, resp.body);
+
+            const streamPipeline = promisify(pipeline);
+            await streamPipeline(resp.body, fs.createWriteStream(logo_path));
             logo_url = await aws.uploadLogo(script_id, logo_path);
         }
 
@@ -265,8 +269,8 @@ const handle_new_brew = async (req, res, next) =>
         {
             const pages_path = path.join(working_dir, `pages`, `${document}`);
             const num_pages = fs.readdirSync(pages_path).length;
-
             const pdf_full_path = path.join(working_dir, pdf_basenames[document]);
+            
             const url = await aws.uploadDocument(script_id, pdf_full_path);
             await pg.createDocument(script_id, document, num_pages, url);
         

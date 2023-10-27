@@ -1,4 +1,4 @@
 module.exports = 
 {
-    content: ['./src/**/*.{js, jsx}', './public/index.html']
+    content: ['./frontend/**/*.{js, jsx, html}']
 }

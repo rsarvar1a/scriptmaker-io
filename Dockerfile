@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install -y git curl python-is-python3 python3-pip 
 RUN git clone https://github.com/rsarvar1a/scriptmaker
 WORKDIR /app/scriptmaker
 RUN poetry install
+
+# I hate whatever NTFS->ext4 did to my repo
+
+RUN chmod -R +x *
 RUN bin/update
 
 # Start the server

@@ -2,7 +2,11 @@
 
 const express = require('express');
 const cors = require('cors');
-const { Server } = require('http');
+
+// Util
+
+const fs = require('fs');
+const path = require('path');
 
 // Handlers
 
@@ -18,27 +22,20 @@ const handle_send_pdf = require('./actions/handle_send_pdf');
 const handle_send_logo = require('./actions/handle_send_logo'); 
 const handle_send_json = require('./actions/handle_send_json');
 
-// Util
-
-const fs = require('fs');
-const path = require('path');
-
 // Configure app
 
 const app = express();
-const httpserver = Server(app);
-
-const dist = path.join(__dirname, "dist");
-app.use(express.static(dist));
 app.use(express.json());
 app.use(cors());
 
-// Create homebrew route
+// Frontend 
+
+const dist = path.join(__dirname, "dist");
+app.use(express.static(dist));
+
+// API
 
 app.post('/api/brew', handle_new_brew);
-
-// Informational routes
-
 app.post("/api/search", handle_search);
 
 app.get('/api/:scriptid', handle_script_info);
@@ -51,16 +48,16 @@ app.get('/api/:scriptid/documents/:document/pages/:page', handle_send_page);
 app.get('/api/:scriptid/logo', handle_send_logo);
 app.get('/api/:scriptid/script', handle_send_json);
 
-// Kick rest up to frontend
+// Kick rest to frontend
 
-app.get('/', (req, res) => 
+app.get("*", (req, res, next) =>
 {
-    res.sendFile(path.join(dist, "index.html"));
+    res.redirect("/");
 });
 
 // Start server
 
-httpserver.listen(3000, () => 
+app.listen(3000, () => 
 {
     console.log("Ready and listening on port 3000.");
 });

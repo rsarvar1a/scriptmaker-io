@@ -82,6 +82,10 @@ class AWSClient
             await this.uploadFile(key, file_path);
             return url;
         }
+        catch (err)
+        {
+            throw Error(`could not upload json for ${script_id}: ${err}`);
+        }
     }
 
     // Uploads ${script_id}/logo.png to the S3 bucket; returns the object URL
