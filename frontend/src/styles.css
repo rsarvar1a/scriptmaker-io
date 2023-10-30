@@ -1,3 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face 
+{
+    font-family: "Dumbledor";
+    src: url("../public/Dumbledor.ttf");
+}
+
+@media (min-width: 768px) 
+{
+    ::-webkit-scrollbar
+    {
+        width: 12px;
+    }    
+
+    ::-webkit-scrollbar-track
+    {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb
+    {
+        background-color: "#201828";
+        background-clip: content-box;
+        border-radius: 8px;
+    }
+}

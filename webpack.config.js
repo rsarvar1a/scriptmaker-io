@@ -1,8 +1,10 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
 const public_dir = path.join(__dirname, "frontend", "public");
+const smp = new SpeedMeasurePlugin();
 
-const config = {
+const config = smp.wrap({
     entry: './frontend/src/index.js',
     output: {
         path: path.resolve(__dirname, 'dist'),
@@ -22,15 +24,15 @@ const config = {
                 use: ['style-loader', 'css-loader', 'postcss-loader']
             },
             {
-                test: /\.png$/,
+                test: /\.(png|svg)$/,
                 include: /frontend/,
                 use: 'file-loader'
             },
             {
-                test: /\.svg$/,
+                test: /\.(woff|woff2|eot|ttf|otf)$/i,
                 include: /frontend/,
-                use: 'file-loader'
-            }
+                type: 'asset/resource',
+            },
         ]
     },
     plugins: [
@@ -40,6 +42,6 @@ const config = {
             name: "index.html"
         })
     ]
-};
+});
 
 module.exports = config;

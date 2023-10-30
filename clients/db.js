@@ -85,7 +85,7 @@ class PGClient
         }
         catch (err)
         {
-            throw Error(`pg: failed to get brew ${script_id}: ${err}`);
+            throw err;
         }
         finally
         {
@@ -195,7 +195,7 @@ class PGClient
         }
         catch (err)
         {
-            throw Error(`pg: could not search homebrews: ${err}`);
+            throw err;
         }
         finally 
         {
@@ -206,7 +206,7 @@ class PGClient
     // Ensures a brew exists; if not, throws an error
     validateBrew = async (script_id) =>
     {
-        this.getBrew(script_id);
+        await this.getBrew(script_id);
     };
 
     // Saves a download link for this brew
@@ -235,7 +235,7 @@ class PGClient
         }
         catch (err)
         {
-            throw Error(`pg: failed to create document ${script_id}/${document}: ${err}`);
+            throw err;
         }
         finally
         {
@@ -260,7 +260,7 @@ class PGClient
         }
         catch (err)
         {
-            throw Error(`pg: failed to get available downloads for ${script_id}: ${err}`);
+            throw err;
         }
         finally 
         {
@@ -286,7 +286,7 @@ class PGClient
         }
         catch (err)
         {
-            throw Error(`pg: failed to get document ${script_id}/${document}: ${err}`);
+            throw err;
         }
         finally
         {
@@ -330,7 +330,7 @@ class PGClient
         }
         catch(err)
         {
-            throw Error(`pg: failed to create page ${script_id}/${document}/${page_number}: ${err}`);
+            throw err;
         }
         finally
         {
@@ -362,7 +362,7 @@ class PGClient
         }
         catch (err)
         {
-            throw Error(`pg: failed to get pages for ${script_id}/${document}: ${err}`);
+            throw err;
         }
         finally
         {
@@ -387,7 +387,7 @@ class PGClient
         }
         catch (err)
         {
-            throw Error(`pg: failed to get page ${script_id}/${document}/${page_number}: ${err}`);
+            throw err;
         }
         finally
         {

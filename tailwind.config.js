@@ -1,4 +1,14 @@
 module.exports = 
 {
-    content: ['./frontend/**/*.{js, jsx, html}']
+    content: ['./frontend/**/*.{js, jsx, html}'],
+    theme:
+    {
+        extend:
+        {
+            fontFamily:
+            {
+                "dumbledor": ["Dumbledor"]
+            }
+        }
+    }
 }

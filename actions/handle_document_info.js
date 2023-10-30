@@ -8,12 +8,12 @@ const handle_document_info = async (req, res, next) =>
     try 
     {
         const pg = new PGClient();
-        const document = await pg.getDocument(script_id, document);
-        res.status(200).json(document);
+        const document_info = await pg.getDocument(script_id, document);
+        res.status(200).json(document_info);
     }
     catch (err)
     {
-        res.status(404).send(`failed to retrieve document: ${err}`);
+        next(err);
     }
 };
 
