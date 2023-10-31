@@ -74,7 +74,7 @@ class ScriptImpl extends React.Component
                         </motion.div>
                     </motion.div>
                     { this.state.documents ?
-                        <PagesScroller shadow="shadow-md shadow-slate-300" flex="flex-none self-center" padding="my-8" height="h-1/2 md:h-3/5" width="w-9/10 md:w-auto" documents={ this.state.documents }/> : <></>
+                        <PagesScroller shadow="" flex="flex-none self-center" padding="pt-12 py-4" height="h-1/2 md:h-3/5" width="w-9/10 md:w-auto" documents={ this.state.documents }/> : <></>
                     }
                 </AnimatePresence>
         )

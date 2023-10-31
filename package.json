@@ -17,6 +17,7 @@
     "aws-sdk": "^2.1478.0",
     "axios": "^1.6.0",
     "child_process": "^1.0.2",
+    "color-interpolate": "^1.0.5",
     "cors": "^2.8.5",
     "ejs": "^3.1.9",
     "express": "^4.18.2",

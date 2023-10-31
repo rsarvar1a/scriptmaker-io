@@ -22,8 +22,9 @@
 
     ::-webkit-scrollbar-thumb
     {
-        background-color: "#201828";
+        background-color: #64636c;
         background-clip: content-box;
-        border-radius: 8px;
+        border-radius: 12px;
+        border: 6px transparent solid;
     }
 }

@@ -49,8 +49,8 @@ const handle_new_brew = async (req, res, next) =>
         const edition = source.edition;
         const url = source.url;
 
-        const nightorder = source.nightorder;
-        const script = source.script;
+        const nightorder = homebrew.nightorder;
+        const script = homebrew.script;
         const simple = source.simple;
         var script_content = {};
 
