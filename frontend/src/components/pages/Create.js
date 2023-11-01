@@ -35,8 +35,15 @@ export default class Create extends React.Component
         this.editorRef = null
     }
 
-    prepState()
+    setSync(state)
     {
+        return new Promise(resolve => this.setState(state, () => resolve()))
+    }
+
+    async prepState()
+    {
+        await this.setSync({ payloadOk: false, payload: null})
+
         let payload =
         {
             source: 
@@ -46,8 +53,6 @@ export default class Create extends React.Component
                 make: ['script']
             }
         }
-
-        this.setState({ payloadOk: false, payload: null })
 
         if (this.state.edition === "") return
         if (this.state.simple) payload.source['simple'] = true
@@ -73,7 +78,7 @@ export default class Create extends React.Component
             if (this.state.scriptURL === "") return
         }
 
-        this.setState({ payload: payload, payloadOk: true })
+        await this.setSync({ payload: payload, payloadOk: true })
     }
 
     render() 
@@ -82,7 +87,7 @@ export default class Create extends React.Component
         {
             try
             {
-                this.prepState()
+                await this.prepState()
                 this.setState({ apiCalled: true })
 
                 const { payload, payloadOk } = this.state
