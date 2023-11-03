@@ -12,6 +12,8 @@
 {
     ::-webkit-scrollbar
     {
+        position: absolute;
+        top: -12px;
         width: 12px;
     }    
 

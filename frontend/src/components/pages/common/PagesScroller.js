@@ -42,9 +42,9 @@ export default class PagesScroller extends React.Component
     {
         return (
             this.state.has_pages ?
-                <motion.div key="scroller" className={`${this.props.height} ${this.props.width} ${this.props.padding} ${this.props.shadow} ${this.props.flex} flex flex-row gap-2 items-center justify-start justify-items-start overflow-x-scroll overflow-y-clip scroll-smooth snap-x snap-center transition ease-in-out`}>
+                <motion.div key="scroller" className={`${this.props.height} ${this.props.width} ${this.props.padding} ${this.props.shadow} ${this.props.flex} flex flex-row gap-2 items-center justify-start justify-items-start overflow-x-scroll overflow-y-clip scroll-smooth snap-x snap-center transition ease-in-out relative`}>
                 { this.state.page_urls.map(
-                    url => <img src={url} alt="" className="object-contain snap-center h-full shadow-lg shadow-slate-300"/>
+                    url => <img src={url} alt="" className="object-contain snap-center h-full shadow-xl shadow-slate-300"/>
                 )}
                 </motion.div>
                 : <></>

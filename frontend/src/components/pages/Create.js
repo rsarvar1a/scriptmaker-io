@@ -119,10 +119,6 @@ export default class Create extends React.Component
             {
                 this.setState({ scriptJson: null, jsonError: err })
             }
-            finally
-            {
-                this.prepState()
-            }
         }
 
         const handleFirstNight = event =>
@@ -143,10 +139,6 @@ export default class Create extends React.Component
             {
                 this.setState({ firstNightError: err })
             }
-            finally
-            {
-                this.prepState()
-            }
         }
 
         const handleOtherNight = event =>
@@ -166,10 +158,6 @@ export default class Create extends React.Component
             catch (err)
             {
                 this.setState({ otherNightError: err })
-            }
-            finally
-            {
-                this.prepState()
             }
         }
 
