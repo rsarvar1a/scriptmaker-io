@@ -7,6 +7,7 @@ import InlineMenu from './InlineMenu.js';
 
 import discord from "./discord.svg";
 import github from "./github.svg";
+import paypal from "./paypal.svg";
 
 export default function Header (props)
 {
@@ -20,6 +21,7 @@ export default function Header (props)
                 <Branding />
                 <HeaderSocial to="https://discord.gg/botc" logo={discord}/>
                 <HeaderSocial to="https://github.com/rsarvar1a/scriptmaker-io" logo={github}/>
+                <HeaderSocial to="https://www.paypal.com/donate/?business=HGE39H9AP9NRJ&no_recurring=0&item_name=Thank+you+for+helping+me+with+hosting+costs%21&currency_code=CAD" logo={paypal}/>
             </div>
         </div>
     )
