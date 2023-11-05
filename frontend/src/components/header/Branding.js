@@ -7,7 +7,7 @@ export default function Branding (props)
 {
     return (
         <Link to="/">
-            <img src={logo} alt="" className="justify-self-center flex-none h-9"/>
+            <img src={logo} alt="" className="justify-self-center flex-none h-[3vh] md:h-9"/>
         </Link>
     )
 }

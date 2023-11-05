@@ -12,7 +12,7 @@ import paypal from "./paypal.svg";
 export default function Header (props)
 {
     return (
-        <div className="h-14 p-2 gap-4 flex flex-row items-stretch justify-items-stretch border-b-2 border-slate-500 text-slate-100 bg-slate-950">
+        <div className="h-[5vh] md:h-14 p-2 gap-4 flex flex-row items-stretch justify-items-stretch border-b-2 border-slate-500 text-slate-100 bg-slate-950">
             <div className="w-auto md:w-1/3 flex-initial md:flex-shrink flex flex-row items-center justify-items-start gap-4">
                 <InlineMenu/>
                 <BurgerMenu/>

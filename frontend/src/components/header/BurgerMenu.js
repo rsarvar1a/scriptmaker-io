@@ -20,7 +20,7 @@ export default function BurgerMenu (props)
     return (
         <div className="-z-1 relative md:hidden flex-initial flex flex-row items-stretch justify-items-center">
             <button className={"transition ease-in-out hover:bg-slate-700 rounded-xl px-1 py-1 bg-slate-" + (open ? "700" : "800")} onClick={toggle}>
-                <img src={burger} alt="" className="h-7"/>
+                <img src={burger} alt="" className="h-[3vh] md:h-7"/>
             </button>
             <AnimatePresence>
                 { open ?

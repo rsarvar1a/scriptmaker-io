@@ -23,7 +23,7 @@ root.render(
         <HashRouter>
             <div className="flex flex-col h-screen w-screen items-center justify-items-center overflow-clip">
                 <div className="flex-none self-stretch z-50"><Header/></div>
-                <div style={{ backgroundImage: "url(" + background + ")", backgroundPosition: "center", backgroundSize: "cover" }} className="z-40 flex-auto w-full h-full flex flex-col items-center justify-items-center bg-blend-multiply bg-slate-200">
+                <div style={{ backgroundImage: "url(" + background + ")", backgroundPosition: "center", backgroundSize: "cover" }} className="z-40 flex-none w-full h-[95vh] flex flex-col items-center justify-items-center bg-blend-multiply bg-slate-200">
                     <div className="z-30 backdrop-blur-[2px] flex-auto w-full h-full flex flex-col items-center justify-items-center">
                         <AnimatePresence mode="wait">
                             <Routes key={window.location.pathname}>
