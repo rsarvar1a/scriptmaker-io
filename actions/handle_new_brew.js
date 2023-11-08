@@ -18,6 +18,21 @@ const nightorder_schema = require('../schemas/nightorder')
 const script_schema = require("../schemas/script")
 const upload_schema = require('../schemas/upload');
 
+const sanitize = (input) =>
+{
+    let e = input;
+    e = e.replaceAll(' ', '-');
+    for (const ch of '()[]{}!?$') e = e.replaceAll(ch, '');
+    e = e.replaceAll('&', 'and');
+    return e;
+}
+
+const write_to_log = (resp, logfile) =>
+{
+    logfile.write(resp.stdout);
+    logfile.write(resp.stderr);
+}
+
 const handle_new_brew = async (req, res, next) => 
 {
     var working_dir = "";
@@ -46,7 +61,7 @@ const handle_new_brew = async (req, res, next) =>
         // Figure out where we're getting our script from, and validate everything
 
         const source = homebrew.source;
-        const edition = source.edition;
+        const edition = `${sanitize(source.edition)}`;
         const url = source.url;
 
         const nightorder = homebrew.nightorder;
@@ -97,7 +112,7 @@ const handle_new_brew = async (req, res, next) =>
         {
             if (entry.id == "_meta" && "name" in entry)
             {
-                script_name = entry.name.replaceAll(" ", "_").replaceAll("&", "and");
+                script_name = sanitize(entry.name);
                 break;
             }
         }
@@ -152,12 +167,17 @@ const handle_new_brew = async (req, res, next) =>
 
         console.log(`created ${working_dir}`);
 
+        // Use a logfile so we can read back what happened in development mode
+
+        let logfile = fs.createWriteStream(path.join(working_dir, "processes.log"), { flags: 'a' });
+
         // Extract / scrape / parse homebrew with scriptmaker
 
         const scriptmaker_pwd = path.join(__dirname, "../scriptmaker");
 
         console.log(`bin/homebrew ${working_dir}`);
         const resp_homebrew = spawnSync("bin/homebrew", [working_dir], { cwd: scriptmaker_pwd, shell: true });
+        write_to_log(resp_homebrew, logfile);
 
         if (resp_homebrew.error)
         {
@@ -181,6 +201,7 @@ const handle_new_brew = async (req, res, next) =>
         {
             console.log(`bin/make-pdf ${make_pdf_args}`);
             const resp_makepdf = spawnSync("bin/make-pdf", make_pdf_args, { cwd: scriptmaker_pwd, shell: true });
+            write_to_log(resp_makepdf, logfile);
 
             if (resp_makepdf.error)
             {  
@@ -193,6 +214,7 @@ const handle_new_brew = async (req, res, next) =>
             const almanac_basename = path.join(working_dir, `${script_name}-almanac.pdf`);
             console.log(`bin/almanac ${working_dir} --output ${almanac_basename}`);
             const resp_almanac = spawnSync("bin/almanac", [working_dir, "--output", almanac_basename], { cwd: scriptmaker_pwd, shell: true });
+            write_to_log(resp_almanac, logfile);
 
             if (resp_almanac.error)
             {
@@ -204,6 +226,7 @@ const handle_new_brew = async (req, res, next) =>
 
         console.log(`bin/compress ${working_dir}`);
         const resp_compress = spawnSync("bin/compress", [working_dir], { cwd: scriptmaker_pwd, shell: true });
+        write_to_log(resp_compress, logfile);
 
         if (resp_compress.error)
         {
@@ -214,6 +237,7 @@ const handle_new_brew = async (req, res, next) =>
 
         console.log(`bin/pngify ${path.join(working_dir, script_path)}`);
         const resp_pngify = spawnSync("bin/pngify", [path.join(working_dir, script_path)], { cwd: scriptmaker_pwd, shell: true });
+        write_to_log(resp_pngify, logfile);
 
         if (resp_pngify.error)
         {
@@ -298,7 +322,7 @@ const handle_new_brew = async (req, res, next) =>
     {
         try
         {
-            fs.rmSync(working_dir, { recursive: true });
+            if (! process.env.KEEP_INTERMEDIATE) fs.rmSync(working_dir, { recursive: true });
         }
         catch (err)
         {

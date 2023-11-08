@@ -3,5 +3,6 @@ export AWS_SECRET_ACCESS_KEY="$(stoml ~/.aws/credentials default.aws_secret_acce
 export AWS_S3_BUCKET="scriptmaker-dev"
 export AWS_DEFAULT_REGION="us-east-1"
 export DATABASE_URL="postgres://scriptmaker@localhost:5432/scriptmaker_dev"
+export KEEP_INTERMEDIATE="true"
 
 npm run start

@@ -161,6 +161,13 @@ export default class Create extends React.Component
             }
         }
 
+        const handleEdition = event =>
+        {
+            const cleaned = event.target.value.replaceAll(' ', '-')
+            event.target.value = cleaned
+            this.setState({ edition: cleaned })
+        }
+
         const t =
         {
             initial: 
@@ -222,7 +229,7 @@ export default class Create extends React.Component
                                     onBlur={handleOtherNight}></textarea>
                                 </motion.div> : <></>
                         }
-                        <motion.input layout key="edition" className="font-mono px-2 py-1 rounded-md border-2 border-slate-200 bg-white shadow-md shadow-slate-300 focus:outline-none" placeholder="name your edition" onBlur={event => { this.setState({ edition: event.target.value }) }} />
+                        <motion.input layout key="edition" className="font-mono px-2 py-1 rounded-md border-2 border-slate-200 bg-white shadow-md shadow-slate-300 focus:outline-none" placeholder="name your edition" onChange={handleEdition} />
                         <motion.div layout key="create-button" className="relative self-center flex flex-row items-center justify-center justify-items-center gap-4">
                             <div className={"self-center flex flex-row items-center justify-items-center justify-center rounded-xl px-4 py-1 bg-white border-slate-200 border-2 shadow-md shadow-slate-300" + (this.state.payloadOk ? (this.state.apiCalled ? "" : " transition ease-in-out hover:scale-110 active:scale-100") : "")}>
                             {
