@@ -18,7 +18,7 @@ A front-end for my [scriptmaker](https://github.com/rsarvar1a/scriptmaker) utili
 ## planned improvements
 
 - frontend
-    - actually have a frontend
+    - many key features (queries, favourites)
 
 # API
 
